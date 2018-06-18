@@ -15,7 +15,7 @@ app.use(morgan('dev'));
 app.get('/api/:model/:parameter/:run/:step/:region.png', function (req, res) {
     var _a = req.params, model = _a.model, parameter = _a.parameter, run = _a.run, step = _a.step, region = _a.region;
     var mapHash = md5(model + "-" + parameter + "-" + run + "-" + step + "-" + region);
-    mongo.renderedImages.findOne({ hash: mapHash }, function (err, doc) {
+    mongo.renderedMaps.findOne({ hash: mapHash }, function (err, doc) {
         if (err) {
             console.error("Error fetching [" + mapHash + "] from mongo:", err);
             res.status(500).send({});
@@ -32,7 +32,7 @@ app.get('/api/:model/:parameter/:run/:step/:region.png', function (req, res) {
     });
 });
 app.get('/api/mapRuns', function (req, res) {
-    mongo.renderedImages.find({}, function (err, docs) {
+    mongo.renderedMaps.find({}, function (err, docs) {
         if (err) {
             console.error("Error fetching mapRuns from mongo:", err);
             res.status(500).send({});
