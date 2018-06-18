@@ -120,7 +120,7 @@ nrp.on("gfs:stepConverted", function (_a) {
     console.info("Got [gfs:stepConverted] message: [run=" + run + "] [step=" + step + "]");
     mongo.mapConfigs.find({ model: 'gfs' }, function (err, mapsToGenerate) {
         return __awaiter(this, void 0, void 0, function () {
-            var netcdfFile, _i, mapsToGenerate_1, _a, model, parameter, region, mapHash, outFile, err_3;
+            var netcdfFile, _i, mapsToGenerate_1, _a, model, parameter, region, mapHash, outFile, makeMapPath, err_3;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -141,10 +141,11 @@ nrp.on("gfs:stepConverted", function (_a) {
                         console.log("Generating map: " + model + "-" + parameter + "-" + run + "-" + step + "-" + region);
                         mapHash = md5(model + "-" + parameter + "-" + run + "-" + step + "-" + region);
                         outFile = path.join(config_1.default.imagePath, mapHash + ".png");
+                        makeMapPath = path.join(__dirname, '../make-map.py');
                         _b.label = 4;
                     case 4:
                         _b.trys.push([4, 6, , 7]);
-                        return [4 /*yield*/, exec("python ../make-map.py " + netcdfFile + " " + parameter + " " + outFile)];
+                        return [4 /*yield*/, exec("python " + makeMapPath + " " + netcdfFile + " " + parameter + " " + outFile)];
                     case 5:
                         _b.sent();
                         nrp.emit("gfs:imageGenerated", { run: run, step: step, parameter: parameter, region: region });

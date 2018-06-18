@@ -59,8 +59,9 @@ nrp.on(`gfs:stepConverted`, function ({ run, step }: any) { // Make Map
                 console.log(`Generating map: ${model}-${parameter}-${run}-${step}-${region}`);
                 const mapHash = <string>md5(`${model}-${parameter}-${run}-${step}-${region}`);
                 const outFile = path.join(config.imagePath, `${mapHash}.png`);
+                const makeMapPath = path.join(__dirname, '../make-map.py');
                 try {
-                    await exec(`python ../make-map.py ${netcdfFile} ${parameter} ${outFile}`)
+                    await exec(`python ${makeMapPath} ${netcdfFile} ${parameter} ${outFile}`)
                     nrp.emit(`gfs:imageGenerated`, { run, step, parameter, region });
                 } catch (err) {
                     console.error(`Failed to exec python ../make-map.py:`, err);
