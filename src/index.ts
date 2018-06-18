@@ -1,7 +1,7 @@
 import md5 = require('md5');
 import * as path from 'path';
 import exec = require('promised-exec');
-import NRP from 'node-redis-pubsub';
+import NRP = require('node-redis-pubsub');
 import mongojs from 'mongojs';
 
 const mongo = mongojs('mapTool');
@@ -42,7 +42,7 @@ nrp.on(`gfs:stepConverted`, function ({ run, step }: any) { // Make Map
                 console.log(`Generating map: ${model}-${parameter}-${run}-${step}-${region}`);
                 const mapHash = <string>md5(`${model}-${parameter}-${run}-${step}-${region}`);
                 const outFile = path.join(config.imagePath, `${mapHash}.png`);
-                await exec(`python ./make-map.py ${netcdfFile} ${parameter} ${outFile}`)
+                await exec(`python ../make-map.py ${netcdfFile} ${parameter} ${outFile}`)
                 nrp.emit(`gfs:imageGenerated`, { run, step, parameter, region });
             }
         }

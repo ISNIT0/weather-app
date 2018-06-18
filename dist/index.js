@@ -38,11 +38,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var md5 = require("md5");
 var path = require("path");
 var exec = require("promised-exec");
-var node_redis_pubsub_1 = require("node-redis-pubsub");
+var NRP = require("node-redis-pubsub");
 var mongojs_1 = require("mongojs");
 var mongo = mongojs_1.default('mapTool');
 var config_1 = require("./config");
-var nrp = new node_redis_pubsub_1.default({
+var nrp = new NRP({
     scope: 'demo'
 });
 nrp.on("gfs:stepAvailable", function (_a) {
@@ -114,7 +114,7 @@ nrp.on("gfs:stepConverted", function (_a) {
                         console.log("Generating map: " + model + "-" + parameter + "-" + run + "-" + step + "-" + region);
                         mapHash = md5(model + "-" + parameter + "-" + run + "-" + step + "-" + region);
                         outFile = path.join(config_1.default.imagePath, mapHash + ".png");
-                        return [4 /*yield*/, exec("python ./make-map.py " + netcdfFile + " " + parameter + " " + outFile)];
+                        return [4 /*yield*/, exec("python ../make-map.py " + netcdfFile + " " + parameter + " " + outFile)];
                     case 3:
                         _b.sent();
                         nrp.emit("gfs:imageGenerated", { run: run, step: step, parameter: parameter, region: region });
