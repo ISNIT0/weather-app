@@ -73,7 +73,7 @@ nrp.on("gfs:stepAvailable", function (_a) {
                                 return [4 /*yield*/, exec("gfsscraper downloadStep --outFile \"" + outFile + "\" --run \"" + run + "\" --step \"" + step + "\" --parameterHeightGroups " + phGroups)];
                             case 4:
                                 _a.sent();
-                                nrp.emit("gfs:stepDownloaded");
+                                nrp.emit("gfs:stepDownloaded", { run: run, step: step });
                                 return [3 /*break*/, 6];
                             case 5:
                                 err_1 = _a.sent();

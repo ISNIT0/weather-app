@@ -26,7 +26,7 @@ nrp.on(`gfs:stepAvailable`, async function ({ run, step }: any) { // Download St
             const outFile = path.join(config.downloadPath, run, `${step}.grib2`);
             try {
                 await exec(`gfsscraper downloadStep --outFile "${outFile}" --run "${run}" --step "${step}" --parameterHeightGroups ${phGroups}`);
-                nrp.emit(`gfs:stepDownloaded`);
+                nrp.emit(`gfs:stepDownloaded`, { run, step });
             } catch (err) {
                 console.error(`Failed to exec gfsscraper downloadStep:`, err);
             }
