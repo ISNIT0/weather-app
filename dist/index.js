@@ -43,8 +43,9 @@ var mongojs_1 = require("mongojs");
 var mongo = mongojs_1.default('mapTool');
 var config_1 = require("./config");
 var nrp = new NRP({
-    scope: 'demo'
+    scope: ''
 });
+console.log('Started');
 nrp.on("gfs:stepAvailable", function (_a) {
     var run = _a.run, step = _a.step;
     return __awaiter(this, void 0, void 0, function () {
