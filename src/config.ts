@@ -1,11 +1,11 @@
 const config = {
     production: {
-        downloadPath: './download/gfs/',
-        imagePath: './images'
+        downloadPath: '/home/user/download/gfs/',
+        imagePath: '/home/user/images/'
     },
     development: {
         downloadPath: './download/gfs/',
-        imagePath: './images'
+        imagePath: './images/'
     }
 };
 

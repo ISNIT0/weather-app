@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var config = {
     production: {
-        downloadPath: './download/gfs/',
+        downloadPath: '/home/user/download/gfs/',
         imagePath: './images'
     },
     development: {
