@@ -17,7 +17,7 @@
     "md5": "2.2.1",
     "mongojs": "2.6.0",
     "morgan": "1.9.0",
-    "nimble": "file:../nimble-js",
+    "nimble": "git+https://github.com/isnit0/nimble-js",
     "redis": "2.8.0"
   }
 }
