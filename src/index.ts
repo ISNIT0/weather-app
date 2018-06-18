@@ -24,8 +24,12 @@ nrp.on(`gfs:stepAvailable`, async function ({ run, step }: any) { // Download St
         } else {
             const phGroups = maps.map(m => m.parameter.replace(/_/g, ':')).join(' ');
             const outFile = path.join(config.downloadPath, run, `${step}.grib2`);
-            await exec(`gfsscraper downloadStep --outFile "${outFile}" --run "${run}" --step "${step}" --parameterHeightGroups ${phGroups}`);
-            nrp.emit(`gfs:stepDownloaded`);
+            try {
+                await exec(`gfsscraper downloadStep --outFile "${outFile}" --run "${run}" --step "${step}" --parameterHeightGroups ${phGroups}`);
+                nrp.emit(`gfs:stepDownloaded`);
+            } catch (err) {
+                console.error(`Failed to exec gfsscraper downloadStep:`, err);
+            }
         }
     });
 });
@@ -34,8 +38,12 @@ nrp.on(`gfs:stepDownloaded`, async function ({ run, step }: any) { // Convert St
     console.info(`Got [gfs:stepDownloaded] message: [run=${run}] [step=${step}]`);
     const inFile = path.join(config.downloadPath, run, `${step}.grib2`);
     const outFile = path.join(config.downloadPath, run, `${step}.netcdf`);
-    await exec(`gfsscraper grib2netcdf --inFile "${inFile}" --outFile "${outFile}"`);
-    nrp.emit(`gfs:stepConverted`, { run, step });
+    try {
+        await exec(`gfsscraper grib2netcdf --inFile "${inFile}" --outFile "${outFile}"`);
+        nrp.emit(`gfs:stepConverted`, { run, step });
+    } catch (err) {
+        console.error(`Failed to exec gfsscraper downloadStep:`, err);
+    }
 });
 
 nrp.on(`gfs:stepConverted`, function ({ run, step }: any) { // Make Map
@@ -51,8 +59,12 @@ nrp.on(`gfs:stepConverted`, function ({ run, step }: any) { // Make Map
                 console.log(`Generating map: ${model}-${parameter}-${run}-${step}-${region}`);
                 const mapHash = <string>md5(`${model}-${parameter}-${run}-${step}-${region}`);
                 const outFile = path.join(config.imagePath, `${mapHash}.png`);
-                await exec(`python ../make-map.py ${netcdfFile} ${parameter} ${outFile}`)
-                nrp.emit(`gfs:imageGenerated`, { run, step, parameter, region });
+                try {
+                    await exec(`python ../make-map.py ${netcdfFile} ${parameter} ${outFile}`)
+                    nrp.emit(`gfs:imageGenerated`, { run, step, parameter, region });
+                } catch (err) {
+                    console.error(`Failed to exec python ../make-map.py:`, err);
+                }
             }
         }
     });

@@ -53,26 +53,33 @@ nrp.on("gfs:stepAvailable", function (_a) {
             console.info("Got [gfs:stepAvailable] message: [run=" + run + "] [step=" + step + "]");
             mongo.mapConfigs.find({ model: 'gfs' }, function (err, maps) {
                 return __awaiter(this, void 0, void 0, function () {
-                    var phGroups, outFile;
+                    var phGroups, outFile, err_1;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
                             case 0:
                                 if (!err) return [3 /*break*/, 1];
                                 console.error("Failed to find map configs:", err);
-                                return [3 /*break*/, 4];
+                                return [3 /*break*/, 6];
                             case 1:
                                 if (!!maps.length) return [3 /*break*/, 2];
                                 console.info("Found no maps in mapConfig");
-                                return [3 /*break*/, 4];
+                                return [3 /*break*/, 6];
                             case 2:
                                 phGroups = maps.map(function (m) { return m.parameter.replace(/_/g, ':'); }).join(' ');
                                 outFile = path.join(config_1.default.downloadPath, run, step + ".grib2");
-                                return [4 /*yield*/, exec("gfsscraper downloadStep --outFile \"" + outFile + "\" --run \"" + run + "\" --step \"" + step + "\" --parameterHeightGroups " + phGroups)];
+                                _a.label = 3;
                             case 3:
+                                _a.trys.push([3, 5, , 6]);
+                                return [4 /*yield*/, exec("gfsscraper downloadStep --outFile \"" + outFile + "\" --run \"" + run + "\" --step \"" + step + "\" --parameterHeightGroups " + phGroups)];
+                            case 4:
                                 _a.sent();
                                 nrp.emit("gfs:stepDownloaded");
-                                _a.label = 4;
-                            case 4: return [2 /*return*/];
+                                return [3 /*break*/, 6];
+                            case 5:
+                                err_1 = _a.sent();
+                                console.error("Failed to exec gfsscraper downloadStep:", err_1);
+                                return [3 /*break*/, 6];
+                            case 6: return [2 /*return*/];
                         }
                     });
                 });
@@ -84,18 +91,26 @@ nrp.on("gfs:stepAvailable", function (_a) {
 nrp.on("gfs:stepDownloaded", function (_a) {
     var run = _a.run, step = _a.step;
     return __awaiter(this, void 0, void 0, function () {
-        var inFile, outFile;
+        var inFile, outFile, err_2;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
                     console.info("Got [gfs:stepDownloaded] message: [run=" + run + "] [step=" + step + "]");
                     inFile = path.join(config_1.default.downloadPath, run, step + ".grib2");
                     outFile = path.join(config_1.default.downloadPath, run, step + ".netcdf");
-                    return [4 /*yield*/, exec("gfsscraper grib2netcdf --inFile \"" + inFile + "\" --outFile \"" + outFile + "\"")];
+                    _b.label = 1;
                 case 1:
+                    _b.trys.push([1, 3, , 4]);
+                    return [4 /*yield*/, exec("gfsscraper grib2netcdf --inFile \"" + inFile + "\" --outFile \"" + outFile + "\"")];
+                case 2:
                     _b.sent();
                     nrp.emit("gfs:stepConverted", { run: run, step: step });
-                    return [2 /*return*/];
+                    return [3 /*break*/, 4];
+                case 3:
+                    err_2 = _b.sent();
+                    console.error("Failed to exec gfsscraper downloadStep:", err_2);
+                    return [3 /*break*/, 4];
+                case 4: return [2 /*return*/];
             }
         });
     });
@@ -105,36 +120,43 @@ nrp.on("gfs:stepConverted", function (_a) {
     console.info("Got [gfs:stepConverted] message: [run=" + run + "] [step=" + step + "]");
     mongo.mapConfigs.find({ model: 'gfs' }, function (err, mapsToGenerate) {
         return __awaiter(this, void 0, void 0, function () {
-            var netcdfFile, _i, mapsToGenerate_1, _a, model, parameter, region, mapHash, outFile;
+            var netcdfFile, _i, mapsToGenerate_1, _a, model, parameter, region, mapHash, outFile, err_3;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
                         if (!err) return [3 /*break*/, 1];
                         console.error("Failed to find map configs:", err);
-                        return [3 /*break*/, 6];
+                        return [3 /*break*/, 8];
                     case 1:
                         if (!!mapsToGenerate.length) return [3 /*break*/, 2];
                         console.info("Found no maps in mapConfig");
-                        return [3 /*break*/, 6];
+                        return [3 /*break*/, 8];
                     case 2:
                         netcdfFile = path.join(config_1.default.downloadPath, run, step + ".netcdf");
                         _i = 0, mapsToGenerate_1 = mapsToGenerate;
                         _b.label = 3;
                     case 3:
-                        if (!(_i < mapsToGenerate_1.length)) return [3 /*break*/, 6];
+                        if (!(_i < mapsToGenerate_1.length)) return [3 /*break*/, 8];
                         _a = mapsToGenerate_1[_i], model = _a.model, parameter = _a.parameter, region = _a.region;
                         console.log("Generating map: " + model + "-" + parameter + "-" + run + "-" + step + "-" + region);
                         mapHash = md5(model + "-" + parameter + "-" + run + "-" + step + "-" + region);
                         outFile = path.join(config_1.default.imagePath, mapHash + ".png");
-                        return [4 /*yield*/, exec("python ../make-map.py " + netcdfFile + " " + parameter + " " + outFile)];
+                        _b.label = 4;
                     case 4:
+                        _b.trys.push([4, 6, , 7]);
+                        return [4 /*yield*/, exec("python ../make-map.py " + netcdfFile + " " + parameter + " " + outFile)];
+                    case 5:
                         _b.sent();
                         nrp.emit("gfs:imageGenerated", { run: run, step: step, parameter: parameter, region: region });
-                        _b.label = 5;
-                    case 5:
+                        return [3 /*break*/, 7];
+                    case 6:
+                        err_3 = _b.sent();
+                        console.error("Failed to exec python ../make-map.py:", err_3);
+                        return [3 /*break*/, 7];
+                    case 7:
                         _i++;
                         return [3 /*break*/, 3];
-                    case 6: return [2 /*return*/];
+                    case 8: return [2 /*return*/];
                 }
             });
         });
