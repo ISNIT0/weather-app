@@ -62,7 +62,7 @@ nrp.on(`gfs:stepConverted`, function ({ run, step }: any) { // Make Map
                 const makeMapPath = path.join(__dirname, '../make-map.py');
                 try {
                     await exec(`python ${makeMapPath} ${netcdfFile} ${parameter} ${outFile}`)
-                    nrp.emit(`gfs:imageGenerated`, { run, step, parameter, region });
+                    nrp.emit(`gfs:imageGenerated`, { run, step, parameter, region, hash: mapHash });
                 } catch (err) {
                     console.error(`Failed to exec python ../make-map.py:`, err);
                 }
@@ -71,7 +71,15 @@ nrp.on(`gfs:stepConverted`, function ({ run, step }: any) { // Make Map
     });
 });
 
-nrp.on(`gfs:imageGenerated`, function ({ run, step, parameter, region }: any) {
+nrp.on(`gfs:imageGenerated`, function ({ run, step, parameter, region, hash }: any) {
     // Store map hash in mongo
-    console.log(`Image was generated:`, arguments[0]);
+
+    mongo.renderedMaps.insert({
+        run,
+        step,
+        parameter,
+        region,
+        hash,
+        date: new Date()
+    });
 });

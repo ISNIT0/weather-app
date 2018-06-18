@@ -148,7 +148,7 @@ nrp.on("gfs:stepConverted", function (_a) {
                         return [4 /*yield*/, exec("python " + makeMapPath + " " + netcdfFile + " " + parameter + " " + outFile)];
                     case 5:
                         _b.sent();
-                        nrp.emit("gfs:imageGenerated", { run: run, step: step, parameter: parameter, region: region });
+                        nrp.emit("gfs:imageGenerated", { run: run, step: step, parameter: parameter, region: region, hash: mapHash });
                         return [3 /*break*/, 7];
                     case 6:
                         err_3 = _b.sent();
@@ -164,7 +164,14 @@ nrp.on("gfs:stepConverted", function (_a) {
     });
 });
 nrp.on("gfs:imageGenerated", function (_a) {
-    var run = _a.run, step = _a.step, parameter = _a.parameter, region = _a.region;
     // Store map hash in mongo
-    console.log("Image was generated:", arguments[0]);
+    var run = _a.run, step = _a.step, parameter = _a.parameter, region = _a.region, hash = _a.hash;
+    mongo.renderedMaps.insert({
+        run: run,
+        step: step,
+        parameter: parameter,
+        region: region,
+        hash: hash,
+        date: new Date()
+    });
 });
