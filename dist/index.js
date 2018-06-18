@@ -49,6 +49,7 @@ nrp.on("gfs:stepAvailable", function (_a) {
     var run = _a.run, step = _a.step;
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_b) {
+            console.info("Got [gfs:stepAvailable] message: [run=" + run + "] [step=" + step + "]");
             mongo.mapConfigs.find({ model: 'gfs' }, function (err, maps) {
                 return __awaiter(this, void 0, void 0, function () {
                     var phGroups, outFile;
@@ -82,6 +83,7 @@ nrp.on("gfs:stepDownloaded", function (_a) {
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
+                    console.info("Got [gfs:stepDownloaded] message: [run=" + run + "] [step=" + step + "]");
                     inFile = path.join(config_1.default.downloadPath, run, step + ".grib2");
                     outFile = path.join(config_1.default.downloadPath, run, step + ".netcdf");
                     return [4 /*yield*/, exec("gfsscraper grib2netcdf --inFile \"" + inFile + "\" --outFile \"" + outFile + "\"")];
@@ -95,6 +97,7 @@ nrp.on("gfs:stepDownloaded", function (_a) {
 });
 nrp.on("gfs:stepConverted", function (_a) {
     var run = _a.run, step = _a.step;
+    console.info("Got [gfs:stepConverted] message: [run=" + run + "] [step=" + step + "]");
     mongo.mapConfigs.find({ model: 'gfs' }, function (err, mapsToGenerate) {
         return __awaiter(this, void 0, void 0, function () {
             var netcdfFile, _i, mapsToGenerate_1, _a, model, parameter, region, mapHash, outFile;
