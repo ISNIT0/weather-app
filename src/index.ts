@@ -9,8 +9,10 @@ const mongo = mongojs('mapTool');
 import config from './config';
 
 const nrp = new NRP({
-    scope: 'demo'
+    scope: ''
 });
+
+console.log('Started');
 
 nrp.on(`gfs:stepAvailable`, async function ({ run, step }: any) { // Download Step
     console.info(`Got [gfs:stepAvailable] message: [run=${run}] [step=${step}]`);
