@@ -13,6 +13,7 @@ const nrp = new NRP({
 });
 
 nrp.on(`gfs:stepAvailable`, async function ({ run, step }: any) { // Download Step
+    console.info(`Got [gfs:stepAvailable] message: [run=${run}] [step=${step}]`);
     mongo.mapConfigs.find({ model: 'gfs' }, async function (err: any, maps: any[]) {
         if (err) {
             console.error(`Failed to find map configs:`, err);
@@ -26,6 +27,7 @@ nrp.on(`gfs:stepAvailable`, async function ({ run, step }: any) { // Download St
 });
 
 nrp.on(`gfs:stepDownloaded`, async function ({ run, step }: any) { // Convert Step
+    console.info(`Got [gfs:stepDownloaded] message: [run=${run}] [step=${step}]`);
     const inFile = path.join(config.downloadPath, run, `${step}.grib2`);
     const outFile = path.join(config.downloadPath, run, `${step}.netcdf`);
     await exec(`gfsscraper grib2netcdf --inFile "${inFile}" --outFile "${outFile}"`);
@@ -33,6 +35,7 @@ nrp.on(`gfs:stepDownloaded`, async function ({ run, step }: any) { // Convert St
 });
 
 nrp.on(`gfs:stepConverted`, function ({ run, step }: any) { // Make Map
+    console.info(`Got [gfs:stepConverted] message: [run=${run}] [step=${step}]`);
     mongo.mapConfigs.find({ model: 'gfs' }, async function (err: any, mapsToGenerate: any[]) {
         if (err) {
             console.error(`Failed to find map configs:`, err);
