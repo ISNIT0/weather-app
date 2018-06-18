@@ -59,16 +59,20 @@ nrp.on("gfs:stepAvailable", function (_a) {
                             case 0:
                                 if (!err) return [3 /*break*/, 1];
                                 console.error("Failed to find map configs:", err);
-                                return [3 /*break*/, 3];
+                                return [3 /*break*/, 4];
                             case 1:
+                                if (!!maps.length) return [3 /*break*/, 2];
+                                console.info("Found no maps in mapConfig");
+                                return [3 /*break*/, 4];
+                            case 2:
                                 phGroups = maps.map(function (m) { return m.parameter.replace(/_/g, ':'); }).join(' ');
                                 outFile = path.join(config_1.default.downloadPath, run, step + ".grib2");
                                 return [4 /*yield*/, exec("gfsscraper downloadStep --outFile \"" + outFile + "\" --run \"" + run + "\" --step \"" + step + "\" --parameterHeightGroups " + phGroups)];
-                            case 2:
+                            case 3:
                                 _a.sent();
                                 nrp.emit("gfs:stepDownloaded");
-                                _a.label = 3;
-                            case 3: return [2 /*return*/];
+                                _a.label = 4;
+                            case 4: return [2 /*return*/];
                         }
                     });
                 });
@@ -107,26 +111,30 @@ nrp.on("gfs:stepConverted", function (_a) {
                     case 0:
                         if (!err) return [3 /*break*/, 1];
                         console.error("Failed to find map configs:", err);
-                        return [3 /*break*/, 5];
+                        return [3 /*break*/, 6];
                     case 1:
+                        if (!!mapsToGenerate.length) return [3 /*break*/, 2];
+                        console.info("Found no maps in mapConfig");
+                        return [3 /*break*/, 6];
+                    case 2:
                         netcdfFile = path.join(config_1.default.downloadPath, run, step + ".netcdf");
                         _i = 0, mapsToGenerate_1 = mapsToGenerate;
-                        _b.label = 2;
-                    case 2:
-                        if (!(_i < mapsToGenerate_1.length)) return [3 /*break*/, 5];
+                        _b.label = 3;
+                    case 3:
+                        if (!(_i < mapsToGenerate_1.length)) return [3 /*break*/, 6];
                         _a = mapsToGenerate_1[_i], model = _a.model, parameter = _a.parameter, region = _a.region;
                         console.log("Generating map: " + model + "-" + parameter + "-" + run + "-" + step + "-" + region);
                         mapHash = md5(model + "-" + parameter + "-" + run + "-" + step + "-" + region);
                         outFile = path.join(config_1.default.imagePath, mapHash + ".png");
                         return [4 /*yield*/, exec("python ../make-map.py " + netcdfFile + " " + parameter + " " + outFile)];
-                    case 3:
+                    case 4:
                         _b.sent();
                         nrp.emit("gfs:imageGenerated", { run: run, step: step, parameter: parameter, region: region });
-                        _b.label = 4;
-                    case 4:
+                        _b.label = 5;
+                    case 5:
                         _i++;
-                        return [3 /*break*/, 2];
-                    case 5: return [2 /*return*/];
+                        return [3 /*break*/, 3];
+                    case 6: return [2 /*return*/];
                 }
             });
         });

@@ -19,6 +19,8 @@ nrp.on(`gfs:stepAvailable`, async function ({ run, step }: any) { // Download St
     mongo.mapConfigs.find({ model: 'gfs' }, async function (err: any, maps: any[]) {
         if (err) {
             console.error(`Failed to find map configs:`, err);
+        } else if (!maps.length) {
+            console.info(`Found no maps in mapConfig`);
         } else {
             const phGroups = maps.map(m => m.parameter.replace(/_/g, ':')).join(' ');
             const outFile = path.join(config.downloadPath, run, `${step}.grib2`);
@@ -41,6 +43,8 @@ nrp.on(`gfs:stepConverted`, function ({ run, step }: any) { // Make Map
     mongo.mapConfigs.find({ model: 'gfs' }, async function (err: any, mapsToGenerate: any[]) {
         if (err) {
             console.error(`Failed to find map configs:`, err);
+        } else if (!mapsToGenerate.length) {
+            console.info(`Found no maps in mapConfig`);
         } else {
             const netcdfFile = path.join(config.downloadPath, run, `${step}.netcdf`);
             for (let { model, parameter, region } of mapsToGenerate) {
