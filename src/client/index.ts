@@ -40,7 +40,7 @@ function makeItemSelector(title: string, selectionHandler: (item: SelectionItem)
             ]),
             h(`div.${opts.compact ? 'items-compact' : 'items'}`, items.map(item => {
                 return h('button.item', {
-                    onclick: selectionHandler
+                    onclick: () => selectionHandler(item)
                 }, item.name);
             }))
         ])

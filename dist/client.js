@@ -386,13 +386,13 @@ function makeItemSelector(title, selectionHandler, items, opts) {
         ]),
         nimble_1.h("div." + (opts.compact ? 'items-compact' : 'items'), items.map(function (item) {
             return nimble_1.h('button.item', {
-                onclick: selectionHandler
+                onclick: function () { return selectionHandler(item); }
             }, item.name);
         }))
     ]);
 }
 function makeSetValue(affect, targetKp) {
-    return function (_a) {
+    return function setValue(_a) {
         var value = _a.value;
         affect.set(targetKp, value);
     };
