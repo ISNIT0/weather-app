@@ -73,7 +73,7 @@ nrp.on(`gfs:stepConverted`, function ({ run, step }: any) { // Make Map
 
 nrp.on(`gfs:imageGenerated`, function ({ run, step, parameter, region, hash }: any) {
     // Store map hash in mongo
-
+    console.info(`Got [gfs:imageGenerated] message: [run=${run}] [step=${step}] [parameter=${parameter}] [region=${region}] [hash=${hash}]`);
     mongo.renderedMaps.insert({
         run,
         step,

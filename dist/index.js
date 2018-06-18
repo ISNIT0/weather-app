@@ -164,8 +164,9 @@ nrp.on("gfs:stepConverted", function (_a) {
     });
 });
 nrp.on("gfs:imageGenerated", function (_a) {
-    // Store map hash in mongo
     var run = _a.run, step = _a.step, parameter = _a.parameter, region = _a.region, hash = _a.hash;
+    // Store map hash in mongo
+    console.info("Got [gfs:imageGenerated] message: [run=" + run + "] [step=" + step + "] [parameter=" + parameter + "] [region=" + region + "] [hash=" + hash + "]");
     mongo.renderedMaps.insert({
         run: run,
         step: step,
