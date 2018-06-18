@@ -26,6 +26,7 @@ body {
     height: auto;
     display: flex;
     flex-direction: row;
+    overflow: hidden;
 }
 
 .row>.column {
@@ -35,6 +36,7 @@ body {
 .column {
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .item-selector {
@@ -112,16 +114,18 @@ h6 {
 
 .timebar {
     height: 50px;
+    width: 100%;
     background: #f2f2f2;
     color: #333;
     padding: 10px;
-    overflow-x: scroll;
 }
 
 .timebar .steps {
     height: 100%;
+    width: 100%;
     display: flex;
     flex-direction: row;
+    overflow-x: scroll;
 }
 
 .timebar .step {

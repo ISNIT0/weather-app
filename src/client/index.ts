@@ -63,16 +63,32 @@ makeRenderLoop(target, {
 
         const favourites = [{
             name: 'GFS UK Pressure',
-            value: 'GFSUKPRESSURE'
+            value: {
+                model: 'gfs',
+                region: 'gbr',
+                parameter: 'pressure'
+            }
         }, {
             name: 'GFS UK Pressure',
-            value: 'GFSUKPRESSURE'
+            value: {
+                model: 'gfs',
+                region: 'gbr',
+                parameter: 'pressure'
+            }
         }, {
             name: 'GFS UK Pressure',
-            value: 'GFSUKPRESSURE'
+            value: {
+                model: 'gfs',
+                region: 'gbr',
+                parameter: 'pressure'
+            }
         }, {
             name: 'GFS UK Pressure',
-            value: 'GFSUKPRESSURE'
+            value: {
+                model: 'gfs',
+                region: 'gbr',
+                parameter: 'pressure'
+            }
         }];
 
         const models = [
@@ -120,7 +136,12 @@ makeRenderLoop(target, {
                         background: '#f2f2f2'
                     }
                 }, [
-                        makeItemSelector('Favourites', function () { }, favourites, { colour: '#9B51E0', compact: true }),
+                        makeItemSelector('Favourites', function ({ value }: any) {
+                            const { model, region, parameter } = value;
+                            affect.set('selectedModel', model);
+                            affect.set('selectedRegion', region);
+                            affect.set('selectedParameter', parameter);
+                        }, favourites, { colour: '#9B51E0', compact: true }),
                         makeItemSelector('Models', makeSetValue(affect, 'selectedModel'), models, { colour: '#F2C94C' }),
                         makeItemSelector('Regions', makeSetValue(affect, 'selectedRegion'), regions, { colour: '#F2994A' }),
                         makeItemSelector('Parameters', makeSetValue(affect, 'selectedParameter'), parameters, { colour: '#27AE60' }),
