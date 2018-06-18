@@ -21,7 +21,7 @@ app.get('/api/:model/:parameter/:run/:step/:region.png', (req, res) => {
     const { model, parameter, run, step, region } = req.params;
     const mapHash = <string>md5(`${model}-${parameter}-${run}-${step}-${region}`);
 
-    mongo.renderedImages.findOne({ hash: mapHash }, function (err: any, doc: any) {
+    mongo.renderedMaps.findOne({ hash: mapHash }, function (err: any, doc: any) {
         if (err) {
             console.error(`Error fetching [${mapHash}] from mongo:`, err);
             res.status(500).send({});
@@ -37,7 +37,7 @@ app.get('/api/:model/:parameter/:run/:step/:region.png', (req, res) => {
 });
 
 app.get('/api/mapRuns', function (req, res) {
-    mongo.renderedImages.find({}, function (err: any, docs: any) {
+    mongo.renderedMaps.find({}, function (err: any, docs: any) {
         if (err) {
             console.error(`Error fetching mapRuns from mongo:`, err);
             res.status(500).send({});
