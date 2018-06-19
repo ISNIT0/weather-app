@@ -95,7 +95,7 @@ nrp.on("gfs:stepAvailable", function (_a) {
 nrp.on("gfs:stepDownloaded", function (_a) {
     var run = _a.run, step = _a.step;
     return __awaiter(this, void 0, void 0, function () {
-        var inFile, outFile, out, err_2;
+        var inFile, outFile, err_2;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -107,14 +107,12 @@ nrp.on("gfs:stepDownloaded", function (_a) {
                     _b.trys.push([1, 3, , 4]);
                     return [4 /*yield*/, exec("gfsscraper grib2netcdf --inFile \"" + inFile + "\" --outFile \"" + outFile + "\" --wgrib2 \"" + config_1.default.wgrib2 + "\"")];
                 case 2:
-                    out = _b.sent();
-                    out.stdout.on('data', function (msg) { return console.info('INFO:', msg); });
-                    out.stderr.on('data', function (msg) { return console.error('ERR:', msg); });
+                    _b.sent();
                     nrp.emit("gfs:stepConverted", { run: run, step: step });
                     return [3 /*break*/, 4];
                 case 3:
                     err_2 = _b.sent();
-                    console.error("Failed to exec gfsscraper downloadStep:", err_2);
+                    console.error("Failed to exec gfsscraper convertStep:", err_2);
                     return [3 /*break*/, 4];
                 case 4: return [2 /*return*/];
             }
