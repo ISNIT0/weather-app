@@ -98,6 +98,7 @@ async function pollForSteps() {
     const cursor = await redisGet('gfs:pollCursor');
     if (!cursor) {
         console.error(`No Cursor Found!`);
+        setTimeout(pollForSteps, 3000);
         return; //TODO: find from mongo
     }
     const { runCursor, stepCursor } = JSON.parse(cursor);

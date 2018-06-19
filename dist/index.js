@@ -131,6 +131,7 @@ function pollForSteps() {
                     cursor = _b.sent();
                     if (!cursor) {
                         console.error("No Cursor Found!");
+                        setTimeout(pollForSteps, 3000);
                         return [2 /*return*/]; //TODO: find from mongo
                     }
                     _a = JSON.parse(cursor), runCursor = _a.runCursor, stepCursor = _a.stepCursor;
