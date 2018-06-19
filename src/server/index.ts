@@ -17,6 +17,8 @@ const app = express();
 
 app.use(morgan('dev'));
 
+app.use(express.static('dist/client'));
+
 app.get('/api/:model/:parameter/:run/:step/:region.png', (req, res) => {
     const { model, parameter, run, step, region } = req.params;
     const mapHash = <string>md5(`${model}-${parameter}-${run}-${step}-${region}`);

@@ -12,6 +12,7 @@ rClient.on("error", function (err) {
 });
 var app = express();
 app.use(morgan('dev'));
+app.use(express.static('dist/client'));
 app.get('/api/:model/:parameter/:run/:step/:region.png', function (req, res) {
     var _a = req.params, model = _a.model, parameter = _a.parameter, run = _a.run, step = _a.step, region = _a.region;
     var mapHash = md5(model + "-" + parameter + "-" + run + "-" + step + "-" + region);

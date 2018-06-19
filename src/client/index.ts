@@ -1,6 +1,10 @@
+import * as $ from 'jquery';
+import * as moment from 'moment';
+
 import {
     makeRenderLoop,
-    h
+    h,
+    get
 } from 'nimble';
 
 function leftPad(number: any, targetLength: number) {
@@ -10,12 +14,8 @@ function leftPad(number: any, targetLength: number) {
 
 const target = <HTMLElement>document.getElementById('frame');
 
-const availableSteps = Array(96).join(',').split(',').map((_, index) => {
-    return leftPad(index * 3, 3);
-});
-
-function makeImgUrl(model: string, runCode: string, stepId: string) {
-    return `http://209.250.243.93:5000/${model}.${runCode}/gfs.t00z.pgrb2.1p00.f${stepId}.temp2.png`;
+function makeImgUrl(imageHash: string) {
+    return `http://209.250.243.93:5000/${imageHash}.png`;
 }
 
 type SelectionItem = {
@@ -52,14 +52,25 @@ function makeSetValue(affect: Affect, targetKp: string) {
     }
 }
 
-makeRenderLoop(target, {
+type Step = {
+    step: string,
+    run: string,
+    hash: string,
+};
+
+type Runs = {
+    [runId: string]: Step[]
+}
+
+const affect = makeRenderLoop(target, {
     selectedModel: 'gfs',
-    selectedRun: '2018061800',
-    selectedStep: availableSteps[0],
-    availableSteps: availableSteps
+    selectedRun: '',
+    selectedStep: <Step>{},
+    availableRuns: <Runs>{}
 },
     function (state, affect, changes) {
-        const selectedStepIndex = state.availableSteps.indexOf(state.selectedStep);
+        const steps = <Step[]>(get<Step[]>(state, `availableRuns.${state.selectedRun}`) || []);
+        const selectedStepIndex = steps.findIndex((step: any) => step.step === state.selectedStep.step);
 
         const favourites = [{
             name: 'GFS UK Pressure',
@@ -153,17 +164,32 @@ makeRenderLoop(target, {
                 }, [
                         h('div.img', {
                             style: {
-                                'background-image': `url(${makeImgUrl(state.selectedModel, state.selectedRun, state.selectedStep)})`
+                                'background-image': `url(${makeImgUrl(state.selectedStep.hash)})`
                             }
                         }),
-                        h('div.img-preload', state.availableSteps
+                        h('div.img-preload', steps
                             .slice(selectedStepIndex - 3, selectedStepIndex + 3)
-                            .map(stepId => {
-                                return h('img', { src: makeImgUrl(state.selectedModel, state.selectedRun, stepId) })
+                            .map(step => {
+                                return h('img', { src: makeImgUrl(state.selectedStep.hash) })
                             })),
                         h('div.timebar', {}, [
-                            h('div.steps', state.availableSteps.map((stepId) => {
-                                const isSelected = state.selectedStep === stepId;
+                            h('select.run-selector', {
+                                onchange: function (ev: any) {
+                                    const newRunCode = ev.target.value;
+                                    affect.set('selectedRun', newRunCode);
+                                    affect.set('availableSteps', state.availableRuns[newRunCode].map((a: any) => a.step));
+                                }
+                            }, Object.keys(state.availableRuns)
+                                .map(runCode => {
+                                    const date = moment(runCode, 'YYYYMMDDHH');
+                                    return h('option', {
+                                        selected: runCode === String(state.selectedRun),
+                                        value: runCode
+                                    }, date.format('YYYY-MM-DD HH[z]'));
+                                })),
+                            h('div.steps', steps.map((step) => {
+                                const stepId = step.step;
+                                const isSelected = state.selectedStep.step === stepId;
                                 return h(`button.step${isSelected ? '.selected' : ''}`, {
                                     onclick: () => affect.set('selectedStep', stepId)
                                 }, [stepId]);
@@ -174,3 +200,13 @@ makeRenderLoop(target, {
         ]);
     }
 );
+
+$.getJSON(`/api/mapRuns`)
+    .then((data: any) => {
+        affect.set('availableRuns', data);
+        const latestRun = Object.keys(data)
+            .map(a => parseInt(a))
+            .sort((a, b) => a < b ? 1 : -1)[0];
+        affect.set('selectedRun', latestRun);
+        affect.set('selectedStep', data[latestRun][0].step);
+    });

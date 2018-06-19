@@ -118,6 +118,13 @@ h6 {
     background: #f2f2f2;
     color: #333;
     padding: 10px;
+    display: flex;
+}
+
+.timebar .run-selector {
+    height: 100%;
+    padding: 5px;
+    margin-right: 10px;
 }
 
 .timebar .steps {

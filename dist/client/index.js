@@ -1,16 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var $ = require("jquery");
+var moment = require("moment");
 var nimble_1 = require("nimble");
 function leftPad(number, targetLength) {
     var str = String(number);
     return '0'.repeat(Math.max(targetLength - str.length, 0)) + str;
 }
 var target = document.getElementById('frame');
-var availableSteps = Array(96).join(',').split(',').map(function (_, index) {
-    return leftPad(index * 3, 3);
-});
-function makeImgUrl(model, runCode, stepId) {
-    return "http://209.250.243.93:5000/" + model + "." + runCode + "/gfs.t00z.pgrb2.1p00.f" + stepId + ".temp2.png";
+function makeImgUrl(imageHash) {
+    return "http://209.250.243.93:5000/" + imageHash + ".png";
 }
 function makeItemSelector(title, selectionHandler, items, opts) {
     if (opts === void 0) { opts = {}; }
@@ -36,13 +35,14 @@ function makeSetValue(affect, targetKp) {
         affect.set(targetKp, value);
     };
 }
-nimble_1.makeRenderLoop(target, {
+var affect = nimble_1.makeRenderLoop(target, {
     selectedModel: 'gfs',
-    selectedRun: '2018061800',
-    selectedStep: availableSteps[0],
-    availableSteps: availableSteps
+    selectedRun: '',
+    selectedStep: {},
+    availableRuns: {}
 }, function (state, affect, changes) {
-    var selectedStepIndex = state.availableSteps.indexOf(state.selectedStep);
+    var steps = (nimble_1.get(state, "availableRuns." + state.selectedRun) || []);
+    var selectedStepIndex = steps.findIndex(function (step) { return step.step === state.selectedStep.step; });
     var favourites = [{
             name: 'GFS UK Pressure',
             value: {
@@ -132,17 +132,32 @@ nimble_1.makeRenderLoop(target, {
             }, [
                 nimble_1.h('div.img', {
                     style: {
-                        'background-image': "url(" + makeImgUrl(state.selectedModel, state.selectedRun, state.selectedStep) + ")"
+                        'background-image': "url(" + makeImgUrl(state.selectedStep.hash) + ")"
                     }
                 }),
-                nimble_1.h('div.img-preload', state.availableSteps
+                nimble_1.h('div.img-preload', steps
                     .slice(selectedStepIndex - 3, selectedStepIndex + 3)
-                    .map(function (stepId) {
-                    return nimble_1.h('img', { src: makeImgUrl(state.selectedModel, state.selectedRun, stepId) });
+                    .map(function (step) {
+                    return nimble_1.h('img', { src: makeImgUrl(state.selectedStep.hash) });
                 })),
                 nimble_1.h('div.timebar', {}, [
-                    nimble_1.h('div.steps', state.availableSteps.map(function (stepId) {
-                        var isSelected = state.selectedStep === stepId;
+                    nimble_1.h('select.run-selector', {
+                        onchange: function (ev) {
+                            var newRunCode = ev.target.value;
+                            affect.set('selectedRun', newRunCode);
+                            affect.set('availableSteps', state.availableRuns[newRunCode].map(function (a) { return a.step; }));
+                        }
+                    }, Object.keys(state.availableRuns)
+                        .map(function (runCode) {
+                        var date = moment(runCode, 'YYYYMMDDHH');
+                        return nimble_1.h('option', {
+                            selected: runCode === String(state.selectedRun),
+                            value: runCode
+                        }, date.format('YYYY-MM-DD HH[z]'));
+                    })),
+                    nimble_1.h('div.steps', steps.map(function (step) {
+                        var stepId = step.step;
+                        var isSelected = state.selectedStep.step === stepId;
                         return nimble_1.h("button.step" + (isSelected ? '.selected' : ''), {
                             onclick: function () { return affect.set('selectedStep', stepId); }
                         }, [stepId]);
@@ -151,4 +166,13 @@ nimble_1.makeRenderLoop(target, {
             ])
         ])
     ]);
+});
+$.getJSON("/api/mapRuns")
+    .then(function (data) {
+    affect.set('availableRuns', data);
+    var latestRun = Object.keys(data)
+        .map(function (a) { return parseInt(a); })
+        .sort(function (a, b) { return a < b ? 1 : -1; })[0];
+    affect.set('selectedRun', latestRun);
+    affect.set('selectedStep', data[latestRun][0].step);
 });
