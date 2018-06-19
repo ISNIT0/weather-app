@@ -113,14 +113,14 @@ function leftPad(number: any, targetLength: number) {
     return '0'.repeat(Math.max(targetLength - str.length, 0)) + str;
 }
 
-const getRuns = remember(getAvailableGfsRuns, 2000);
-const getSteps = remember(getAvailableGfsRunSteps, 2000);
+const getRuns = remember(getAvailableGfsRuns, 1000 * 60 * 2);
+const getSteps = remember(getAvailableGfsRunSteps, 1000 * 60 * 2);
 
 async function pollForSteps() {
     const cursor = await redisGet('gfs:pollCursor');
     if (!cursor) {
         console.error(`No Cursor Found!`);
-        setTimeout(pollForSteps, 3000);
+        setTimeout(pollForSteps, 1000 * 60 * 3);
         return; //TODO: find from mongo
     }
     const { runCursor, stepCursor } = JSON.parse(cursor);
@@ -146,7 +146,7 @@ async function pollForSteps() {
             nrp.emit(`gfs:stepAvailable`, { run: newRun, step: leftPad(0, 3) });
             pollForSteps();
         } else {
-            setTimeout(pollForSteps, 3000);
+            setTimeout(pollForSteps, 1000 * 60 * 3);
         }
     }
 }

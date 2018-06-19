@@ -143,8 +143,8 @@ function leftPad(number, targetLength) {
     var str = String(number);
     return '0'.repeat(Math.max(targetLength - str.length, 0)) + str;
 }
-var getRuns = remember(getAvailableGfsRuns, 2000);
-var getSteps = remember(getAvailableGfsRunSteps, 2000);
+var getRuns = remember(getAvailableGfsRuns, 1000 * 60 * 2);
+var getSteps = remember(getAvailableGfsRunSteps, 1000 * 60 * 2);
 function pollForSteps() {
     return __awaiter(this, void 0, void 0, function () {
         var cursor, _a, runCursor, stepCursor, steps, stepCursorIndex, newStep, runs, runCursorIndex, newRun;
@@ -155,7 +155,7 @@ function pollForSteps() {
                     cursor = _b.sent();
                     if (!cursor) {
                         console.error("No Cursor Found!");
-                        setTimeout(pollForSteps, 3000);
+                        setTimeout(pollForSteps, 1000 * 60 * 3);
                         return [2 /*return*/]; //TODO: find from mongo
                     }
                     _a = JSON.parse(cursor), runCursor = _a.runCursor, stepCursor = _a.stepCursor;
@@ -185,7 +185,7 @@ function pollForSteps() {
                         pollForSteps();
                     }
                     else {
-                        setTimeout(pollForSteps, 3000);
+                        setTimeout(pollForSteps, 1000 * 60 * 3);
                     }
                     _b.label = 5;
                 case 5: return [2 /*return*/];
