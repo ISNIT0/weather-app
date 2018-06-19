@@ -30,6 +30,7 @@ function remember(func: (...args: any[]) => any, timeout: number) {
             const result = func(...args);
             lastVal = result;
             setTimeout(() => lastVal = null, timeout);
+            return result;
         }
     }
 }

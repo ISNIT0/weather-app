@@ -65,6 +65,7 @@ function remember(func, timeout) {
             var result = func.apply(void 0, args);
             lastVal = result;
             setTimeout(function () { return lastVal = null; }, timeout);
+            return result;
         }
     };
 }
