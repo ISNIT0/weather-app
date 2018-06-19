@@ -95,7 +95,7 @@ nrp.on("gfs:stepAvailable", function (_a) {
 nrp.on("gfs:stepDownloaded", function (_a) {
     var run = _a.run, step = _a.step;
     return __awaiter(this, void 0, void 0, function () {
-        var inFile, outFile, convertFunc, err_2;
+        var inFile, outFile, executingFunc, out, err_2;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -105,11 +105,13 @@ nrp.on("gfs:stepDownloaded", function (_a) {
                     _b.label = 1;
                 case 1:
                     _b.trys.push([1, 3, , 4]);
-                    convertFunc = "gfsscraper grib2netcdf --inFile \"" + inFile + "\" --outFile \"" + outFile + "\"";
-                    console.info("Executing: [" + convertFunc + "]");
-                    return [4 /*yield*/, exec(convertFunc)];
+                    executingFunc = "wgrib2 -s \"" + inFile + "\" | wgrib2 -i \"" + inFile + "\" -netcdf \"" + outFile + "\"";
+                    console.info("Executing: [" + executingFunc + "]");
+                    return [4 /*yield*/, exec(executingFunc)];
                 case 2:
-                    _b.sent();
+                    out = _b.sent();
+                    out.stdout.on('data', function (msg) { return console.info('INFO:', msg); });
+                    out.stderr.on('data', function (msg) { return console.error('ERR:', msg); });
                     nrp.emit("gfs:stepConverted", { run: run, step: step });
                     return [3 /*break*/, 4];
                 case 3:

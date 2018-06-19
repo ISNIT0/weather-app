@@ -41,9 +41,11 @@ nrp.on(`gfs:stepDownloaded`, async function ({ run, step }: any) { // Convert St
     const inFile = path.join(config.downloadPath, run, `${step}.grib2`);
     const outFile = path.join(config.downloadPath, run, `${step}.netcdf`);
     try {
-        const convertFunc = `gfsscraper grib2netcdf --inFile "${inFile}" --outFile "${outFile}"`;
-        console.info(`Executing: [${convertFunc}]`);
-        await exec(convertFunc);
+        const executingFunc = `wgrib2 -s "${inFile}" | wgrib2 -i "${inFile}" -netcdf "${outFile}"`;
+        console.info(`Executing: [${executingFunc}]`);
+        const out = await exec(executingFunc);
+        out.stdout.on('data', (msg: any) => console.info('INFO:', msg));
+        out.stderr.on('data', (msg: any) => console.error('ERR:', msg));
         nrp.emit(`gfs:stepConverted`, { run, step });
     } catch (err) {
         console.error(`Failed to exec gfsscraper downloadStep:`, err);
