@@ -128,9 +128,10 @@ async function pollForSteps() {
             redisSet('gfs:pollCursor', JSON.stringify({ runCursor: newRun, stepCursor: 0 }));
             nrp.emit(`gfs:stepAvailable`, { run: newRun, step: leftPad(0, 3) });
             pollForSteps();
+        } else {
+            setTimeout(pollForSteps, 3000);
         }
     }
-    setTimeout(pollForSteps, 3000);
 }
 
 pollForSteps();

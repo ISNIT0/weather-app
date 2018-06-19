@@ -164,10 +164,11 @@ function pollForSteps() {
                         nrp.emit("gfs:stepAvailable", { run: newRun, step: leftPad(0, 3) });
                         pollForSteps();
                     }
+                    else {
+                        setTimeout(pollForSteps, 3000);
+                    }
                     _b.label = 5;
-                case 5:
-                    setTimeout(pollForSteps, 3000);
-                    return [2 /*return*/];
+                case 5: return [2 /*return*/];
             }
         });
     });
