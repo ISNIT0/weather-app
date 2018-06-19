@@ -94,6 +94,11 @@ function redisGet(key: string): Promise<any> {
     });
 }
 
+function leftPad(number: any, targetLength: number) {
+    const str = String(number);
+    return '0'.repeat(Math.max(targetLength - str.length, 0)) + str;
+}
+
 async function pollForSteps() {
     const cursor = await redisGet('gfs:pollCursor');
     if (!cursor) {
@@ -111,7 +116,7 @@ async function pollForSteps() {
     if (stepCursorIndex !== (steps.length - 1)) {
         const newStep = steps[stepCursorIndex + 1];
         redisSet('gfs:pollCursor', JSON.stringify({ runCursor, stepCursor: newStep }));
-        nrp.emit(`gfs:stepAvailable`, { run: runCursor, step: newStep });
+        nrp.emit(`gfs:stepAvailable`, { run: runCursor, step: leftPad(stepCursor, 3) });
         pollForSteps();
     } else {
         const runs = await getAvailableGfsRuns();
@@ -121,15 +126,12 @@ async function pollForSteps() {
         if (runCursorIndex !== (runs.length - 1)) {
             const newRun = runs[runCursorIndex + 1];
             redisSet('gfs:pollCursor', JSON.stringify({ runCursor: newRun, stepCursor: 0 }));
-            nrp.emit(`gfs:stepAvailable`, { run: newRun, step: stepCursor });
+            nrp.emit(`gfs:stepAvailable`, { run: newRun, step: leftPad(0, 3) });
             pollForSteps();
         }
     }
     setTimeout(pollForSteps, 3000);
 }
-
-pollForSteps();
-
 
 pollForSteps();
 

@@ -121,6 +121,10 @@ function redisGet(key) {
         });
     });
 }
+function leftPad(number, targetLength) {
+    var str = String(number);
+    return '0'.repeat(Math.max(targetLength - str.length, 0)) + str;
+}
 function pollForSteps() {
     return __awaiter(this, void 0, void 0, function () {
         var cursor, _a, runCursor, stepCursor, steps, stepCursorIndex, newStep, runs, runCursorIndex, newRun;
@@ -145,7 +149,7 @@ function pollForSteps() {
                     if (!(stepCursorIndex !== (steps.length - 1))) return [3 /*break*/, 3];
                     newStep = steps[stepCursorIndex + 1];
                     redisSet('gfs:pollCursor', JSON.stringify({ runCursor: runCursor, stepCursor: newStep }));
-                    nrp.emit("gfs:stepAvailable", { run: runCursor, step: newStep });
+                    nrp.emit("gfs:stepAvailable", { run: runCursor, step: leftPad(stepCursor, 3) });
                     pollForSteps();
                     return [3 /*break*/, 5];
                 case 3: return [4 /*yield*/, getAvailableGfsRuns()];
@@ -157,7 +161,7 @@ function pollForSteps() {
                     if (runCursorIndex !== (runs.length - 1)) {
                         newRun = runs[runCursorIndex + 1];
                         redisSet('gfs:pollCursor', JSON.stringify({ runCursor: newRun, stepCursor: 0 }));
-                        nrp.emit("gfs:stepAvailable", { run: newRun, step: stepCursor });
+                        nrp.emit("gfs:stepAvailable", { run: newRun, step: leftPad(0, 3) });
                         pollForSteps();
                     }
                     _b.label = 5;
@@ -168,7 +172,6 @@ function pollForSteps() {
         });
     });
 }
-pollForSteps();
 pollForSteps();
 nrp.on("gfs:stepAvailable", function (_a) {
     var run = _a.run, step = _a.step;
