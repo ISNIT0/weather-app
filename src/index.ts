@@ -134,7 +134,7 @@ async function pollForSteps() {
         const newStep = steps[stepCursorIndex + 1];
         redisSet('gfs:pollCursor', JSON.stringify({ runCursor, stepCursor: newStep }));
         nrp.emit(`gfs:stepAvailable`, { run: runCursor, step: leftPad(stepCursor, 3) });
-        pollForSteps();
+        setTimeout(() => pollForSteps(), 1000);
     } else {
         const runs = await getRuns();
         console.log(`Got [${runs.length}] runs`);
@@ -144,7 +144,7 @@ async function pollForSteps() {
             const newRun = runs[runCursorIndex + 1];
             redisSet('gfs:pollCursor', JSON.stringify({ runCursor: newRun, stepCursor: 0 }));
             nrp.emit(`gfs:stepAvailable`, { run: newRun, step: leftPad(0, 3) });
-            pollForSteps();
+            setTimeout(() => pollForSteps(), 1000);
         } else {
             setTimeout(pollForSteps, 1000 * 60 * 3);
         }
