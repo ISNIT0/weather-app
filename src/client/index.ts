@@ -170,7 +170,7 @@ const affect = makeRenderLoop(target, {
                         h('div.img-preload', steps
                             .slice(selectedStepIndex - 3, selectedStepIndex + 3)
                             .map(step => {
-                                return h('img', { src: makeImgUrl(state.selectedStep.hash) })
+                                return h('img', { src: makeImgUrl(step.hash) })
                             })),
                         h('div.timebar', {}, [
                             h('select.run-selector', {
@@ -191,7 +191,7 @@ const affect = makeRenderLoop(target, {
                                 const stepId = step.step;
                                 const isSelected = state.selectedStep.step === stepId;
                                 return h(`button.step${isSelected ? '.selected' : ''}`, {
-                                    onclick: () => affect.set('selectedStep', stepId)
+                                    onclick: () => affect.set('selectedStep', step)
                                 }, [stepId]);
                             }))
                         ])
@@ -208,5 +208,5 @@ $.getJSON(`/api/mapRuns`)
             .map(a => parseInt(a))
             .sort((a, b) => a < b ? 1 : -1)[0];
         affect.set('selectedRun', latestRun);
-        affect.set('selectedStep', data[latestRun][0].step);
+        affect.set('selectedStep', data[latestRun][0]);
     });

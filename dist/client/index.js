@@ -138,7 +138,7 @@ var affect = nimble_1.makeRenderLoop(target, {
                 nimble_1.h('div.img-preload', steps
                     .slice(selectedStepIndex - 3, selectedStepIndex + 3)
                     .map(function (step) {
-                    return nimble_1.h('img', { src: makeImgUrl(state.selectedStep.hash) });
+                    return nimble_1.h('img', { src: makeImgUrl(step.hash) });
                 })),
                 nimble_1.h('div.timebar', {}, [
                     nimble_1.h('select.run-selector', {
@@ -159,7 +159,7 @@ var affect = nimble_1.makeRenderLoop(target, {
                         var stepId = step.step;
                         var isSelected = state.selectedStep.step === stepId;
                         return nimble_1.h("button.step" + (isSelected ? '.selected' : ''), {
-                            onclick: function () { return affect.set('selectedStep', stepId); }
+                            onclick: function () { return affect.set('selectedStep', step); }
                         }, [stepId]);
                     }))
                 ])
@@ -174,5 +174,5 @@ $.getJSON("/api/mapRuns")
         .map(function (a) { return parseInt(a); })
         .sort(function (a, b) { return a < b ? 1 : -1; })[0];
     affect.set('selectedRun', latestRun);
-    affect.set('selectedStep', data[latestRun][0].step);
+    affect.set('selectedStep', data[latestRun][0]);
 });
