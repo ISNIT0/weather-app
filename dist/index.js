@@ -51,6 +51,23 @@ var nrp = new NRP({
     scope: ''
 });
 console.log('Started');
+function remember(func, timeout) {
+    var lastVal = null;
+    return function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        if (lastVal) {
+            return lastVal;
+        }
+        else {
+            var result = func.apply(void 0, args);
+            lastVal = result;
+            setTimeout(function () { return lastVal = null; }, timeout);
+        }
+    };
+}
 function getAvailableGfsRunSteps(gfsRunCode) {
     console.log("Getting latest available GFS step for run [" + gfsRunCode + "]");
     return request.get("http://www.ftp.ncep.noaa.gov/data/nccf/com/gfs/prod/gfs." + gfsRunCode + "/")
@@ -125,6 +142,8 @@ function leftPad(number, targetLength) {
     var str = String(number);
     return '0'.repeat(Math.max(targetLength - str.length, 0)) + str;
 }
+var getRuns = remember(getAvailableGfsRuns, 2000);
+var getSteps = remember(getAvailableGfsRunSteps, 2000);
 function pollForSteps() {
     return __awaiter(this, void 0, void 0, function () {
         var cursor, _a, runCursor, stepCursor, steps, stepCursorIndex, newStep, runs, runCursorIndex, newRun;
@@ -140,7 +159,7 @@ function pollForSteps() {
                     }
                     _a = JSON.parse(cursor), runCursor = _a.runCursor, stepCursor = _a.stepCursor;
                     console.log("Got [runCursor=" + runCursor + "] and [stepCursor=" + stepCursor + "]");
-                    return [4 /*yield*/, getAvailableGfsRunSteps(runCursor)];
+                    return [4 /*yield*/, getSteps(runCursor)];
                 case 2:
                     steps = _b.sent();
                     console.log("Found [" + steps.length + "] steps");
@@ -152,7 +171,7 @@ function pollForSteps() {
                     nrp.emit("gfs:stepAvailable", { run: runCursor, step: leftPad(stepCursor, 3) });
                     pollForSteps();
                     return [3 /*break*/, 5];
-                case 3: return [4 /*yield*/, getAvailableGfsRuns()];
+                case 3: return [4 /*yield*/, getRuns()];
                 case 4:
                     runs = _b.sent();
                     console.log("Got [" + runs.length + "] runs");

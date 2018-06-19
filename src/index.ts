@@ -21,6 +21,19 @@ const nrp = new NRP({
 console.log('Started');
 
 
+function remember(func: (...args: any[]) => any, timeout: number) {
+    let lastVal: any = null;
+    return function (...args: any[]) {
+        if (lastVal) {
+            return lastVal;
+        } else {
+            const result = func(...args);
+            lastVal = result;
+            setTimeout(() => lastVal = null, timeout);
+        }
+    }
+}
+
 function getAvailableGfsRunSteps(gfsRunCode: string): Promise<number[]> {
     console.log(`Getting latest available GFS step for run [${gfsRunCode}]`);
     return request.get(`http://www.ftp.ncep.noaa.gov/data/nccf/com/gfs/prod/gfs.${gfsRunCode}/`)
@@ -99,6 +112,9 @@ function leftPad(number: any, targetLength: number) {
     return '0'.repeat(Math.max(targetLength - str.length, 0)) + str;
 }
 
+const getRuns = remember(getAvailableGfsRuns, 2000);
+const getSteps = remember(getAvailableGfsRunSteps, 2000);
+
 async function pollForSteps() {
     const cursor = await redisGet('gfs:pollCursor');
     if (!cursor) {
@@ -109,7 +125,7 @@ async function pollForSteps() {
     const { runCursor, stepCursor } = JSON.parse(cursor);
     console.log(`Got [runCursor=${runCursor}] and [stepCursor=${stepCursor}]`);
 
-    const steps = await getAvailableGfsRunSteps(runCursor);
+    const steps = await getSteps(runCursor);
     console.log(`Found [${steps.length}] steps`);
     const stepCursorIndex = steps.indexOf(stepCursor);
     console.log(`StepCursorIndex is [${stepCursorIndex}]`);
@@ -119,7 +135,7 @@ async function pollForSteps() {
         nrp.emit(`gfs:stepAvailable`, { run: runCursor, step: leftPad(stepCursor, 3) });
         pollForSteps();
     } else {
-        const runs = await getAvailableGfsRuns();
+        const runs = await getRuns();
         console.log(`Got [${runs.length}] runs`);
         const runCursorIndex = runs.indexOf(runCursor);
         console.log(`RunCursorIndex is [${runCursorIndex}]`);
