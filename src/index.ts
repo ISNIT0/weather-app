@@ -23,8 +23,10 @@ nrp.on(`gfs:stepAvailable`, async function ({ run, step }: any) { // Download St
             console.info(`Found no maps in mapConfig`);
         } else {
             const phGroups = maps.map(m => m.parameter.replace(/_/g, ':')).join(' ');
-            const outFile = path.join(config.downloadPath, run, `${step}.grib2`);
+            const outDir = path.join(config.downloadPath, run);
+            const outFile = path.join(outDir, `${step}.grib2`);
             try {
+                await exec(`mkdir -p ${outDir}`);
                 await exec(`gfsscraper downloadStep --outFile "${outFile}" --run "${run}" --step "${step}" --parameterHeightGroups ${phGroups}`);
                 nrp.emit(`gfs:stepDownloaded`, { run, step });
             } catch (err) {

@@ -53,33 +53,37 @@ nrp.on("gfs:stepAvailable", function (_a) {
             console.info("Got [gfs:stepAvailable] message: [run=" + run + "] [step=" + step + "]");
             mongo.mapConfigs.find({ model: 'gfs' }, function (err, maps) {
                 return __awaiter(this, void 0, void 0, function () {
-                    var phGroups, outFile, err_1;
+                    var phGroups, outDir, outFile, err_1;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
                             case 0:
                                 if (!err) return [3 /*break*/, 1];
                                 console.error("Failed to find map configs:", err);
-                                return [3 /*break*/, 6];
+                                return [3 /*break*/, 7];
                             case 1:
                                 if (!!maps.length) return [3 /*break*/, 2];
                                 console.info("Found no maps in mapConfig");
-                                return [3 /*break*/, 6];
+                                return [3 /*break*/, 7];
                             case 2:
                                 phGroups = maps.map(function (m) { return m.parameter.replace(/_/g, ':'); }).join(' ');
-                                outFile = path.join(config_1.default.downloadPath, run, step + ".grib2");
+                                outDir = path.join(config_1.default.downloadPath, run);
+                                outFile = path.join(outDir, step + ".grib2");
                                 _a.label = 3;
                             case 3:
-                                _a.trys.push([3, 5, , 6]);
-                                return [4 /*yield*/, exec("gfsscraper downloadStep --outFile \"" + outFile + "\" --run \"" + run + "\" --step \"" + step + "\" --parameterHeightGroups " + phGroups)];
+                                _a.trys.push([3, 6, , 7]);
+                                return [4 /*yield*/, exec("mkdir -p " + outDir)];
                             case 4:
                                 _a.sent();
-                                nrp.emit("gfs:stepDownloaded", { run: run, step: step });
-                                return [3 /*break*/, 6];
+                                return [4 /*yield*/, exec("gfsscraper downloadStep --outFile \"" + outFile + "\" --run \"" + run + "\" --step \"" + step + "\" --parameterHeightGroups " + phGroups)];
                             case 5:
+                                _a.sent();
+                                nrp.emit("gfs:stepDownloaded", { run: run, step: step });
+                                return [3 /*break*/, 7];
+                            case 6:
                                 err_1 = _a.sent();
                                 console.error("Failed to exec gfsscraper downloadStep:", err_1);
-                                return [3 /*break*/, 6];
-                            case 6: return [2 /*return*/];
+                                return [3 /*break*/, 7];
+                            case 7: return [2 /*return*/];
                         }
                     });
                 });
