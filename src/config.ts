@@ -1,7 +1,7 @@
 const config = {
     production: {
         downloadPath: '/home/user/download/gfs/',
-        imagePath: '/home/user/images/',
+        imagePath: '/srv/images/',
         wgrib2: '/home/user/grib2/wgrib2/wgrib2'
     },
     development: {
