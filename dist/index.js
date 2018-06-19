@@ -40,12 +40,135 @@ var path = require("path");
 var exec = require("promised-exec");
 var NRP = require("node-redis-pubsub");
 var mongojs_1 = require("mongojs");
+var request = require("request-promise-native");
+var cheerio = require("cheerio");
+var moment = require("moment");
+var Redis = require("redis");
+var redis = Redis.createClient();
 var mongo = mongojs_1.default('mapTool');
 var config_1 = require("./config");
 var nrp = new NRP({
     scope: ''
 });
 console.log('Started');
+function getAvailableGfsRunSteps(gfsRunCode) {
+    console.log("Getting latest available GFS step for run [" + gfsRunCode + "]");
+    return request.get("http://www.ftp.ncep.noaa.gov/data/nccf/com/gfs/prod/gfs." + gfsRunCode + "/")
+        .then(function (html) {
+        var $ = cheerio.load(html);
+        return $('a')
+            .toArray()
+            .map(function (el) { return $(el).attr('href'); })
+            .filter(function (a) { return a; })
+            .filter(function (href) { return href.startsWith('gfs.'); })
+            .filter(function (file) { return file.slice(-5).match(/\.f[0-9]+$/); })
+            .filter(function (file) { return !!~file.indexOf('.pgrb2.1'); })
+            .map(function (file) { return file.split('.').slice(-1)[0]; })
+            .map(function (href) { return href.slice(1); })
+            .map(function (stepHour) { return parseInt(stepHour); });
+    });
+}
+function getAvailableGfsRuns() {
+    console.log("Getting latest available GFS runs");
+    return request.get("http://www.ftp.ncep.noaa.gov/data/nccf/com/gfs/prod/")
+        .then(function (html) {
+        var $ = cheerio.load(html);
+        return $('a')
+            .toArray()
+            .map(function (el) { return $(el).attr('href'); })
+            .filter(function (a) { return a; })
+            .filter(function (href) { return href.startsWith('gfs.'); })
+            .map(function (href) {
+            return href.replace(/[^0-9]/g, '');
+        })
+            .sort(function (a, b) {
+            return moment(a, 'YYYYMMDDHH').valueOf() > moment(b, 'YYYYMMDDHH').valueOf() ? 1 : -1;
+        });
+    });
+}
+//every 5 minutes
+/*
+//check prev checked run for new steps
+//if new step
+    // push to redis
+    // update step cursor
+    // loop immediately
+//else if new run exists
+    // update run cursor
+    // loop immediately
+*/
+function redisSet(key, value) {
+    return new Promise(function (resolve, reject) {
+        redis.set(key, value, function (err, res) {
+            if (err) {
+                reject(err);
+            }
+            else {
+                resolve(res);
+            }
+        });
+    });
+}
+function redisGet(key) {
+    return new Promise(function (resolve, reject) {
+        redis.get(key, function (err, res) {
+            if (err) {
+                reject(err);
+            }
+            else {
+                resolve(res);
+            }
+        });
+    });
+}
+function pollForSteps() {
+    return __awaiter(this, void 0, void 0, function () {
+        var cursor, _a, runCursor, stepCursor, steps, stepCursorIndex, newStep, runs, runCursorIndex, newRun;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0: return [4 /*yield*/, redisGet('gfs:pollCursor')];
+                case 1:
+                    cursor = _b.sent();
+                    if (!cursor) {
+                        console.error("No Cursor Found!");
+                        return [2 /*return*/]; //TODO: find from mongo
+                    }
+                    _a = JSON.parse(cursor), runCursor = _a.runCursor, stepCursor = _a.stepCursor;
+                    console.log("Got [runCursor=" + runCursor + "] and [stepCursor=" + stepCursor + "]");
+                    return [4 /*yield*/, getAvailableGfsRunSteps(runCursor)];
+                case 2:
+                    steps = _b.sent();
+                    console.log("Found [" + steps.length + "] steps");
+                    stepCursorIndex = steps.indexOf(stepCursor);
+                    console.log("StepCursorIndex is [" + stepCursorIndex + "]");
+                    if (!(stepCursorIndex !== (steps.length - 1))) return [3 /*break*/, 3];
+                    newStep = steps[stepCursorIndex + 1];
+                    redisSet('gfs:pollCursor', JSON.stringify({ runCursor: runCursor, stepCursor: newStep }));
+                    nrp.emit("gfs:stepAvailable", { run: runCursor, step: newStep });
+                    pollForSteps();
+                    return [3 /*break*/, 5];
+                case 3: return [4 /*yield*/, getAvailableGfsRuns()];
+                case 4:
+                    runs = _b.sent();
+                    console.log("Got [" + runs.length + "] runs");
+                    runCursorIndex = runs.indexOf(runCursor);
+                    console.log("RunCursorIndex is [" + runCursorIndex + "]");
+                    if (runCursorIndex !== (runs.length - 1)) {
+                        newRun = runs[runCursorIndex + 1];
+                        redisSet('gfs:pollCursor', JSON.stringify({ runCursor: newRun, stepCursor: 0 }));
+                        nrp.emit("gfs:stepAvailable", { run: newRun, step: stepCursor });
+                        pollForSteps();
+                    }
+                    _b.label = 5;
+                case 5:
+                    setTimeout(pollForSteps, 3000);
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+pollForSteps();
+pollForSteps();
 nrp.on("gfs:stepAvailable", function (_a) {
     var run = _a.run, step = _a.step;
     return __awaiter(this, void 0, void 0, function () {
