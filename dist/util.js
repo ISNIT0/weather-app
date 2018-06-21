@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var grib2json = require("grib2json");
+var grib2jsonMod = require("grib2json");
 var Jimp = require("jimp");
+var grib2json = grib2jsonMod.default;
 function keyDataByCoordinates(header, data) {
     var keyedValues = {};
     data.forEach(function (val, index) {

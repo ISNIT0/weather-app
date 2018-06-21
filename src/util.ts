@@ -1,5 +1,7 @@
-import grib2json = require('grib2json');
+import grib2jsonMod = require('grib2json');
 import * as Jimp from 'jimp';
+
+const grib2json = grib2jsonMod.default;
 
 function keyDataByCoordinates(header: any, data: any) { // TODO: consider only storing coordinates within BBOX
     const keyedValues: any = {};
