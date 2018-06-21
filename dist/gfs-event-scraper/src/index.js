@@ -44,7 +44,7 @@ var request = require("request-promise-native");
 var cheerio = require("cheerio");
 var moment = require("moment");
 var Redis = require("redis");
-var mapGen_1 = require("./mapGen");
+var node_map_maker_1 = require("../../node-map-maker");
 var redis = Redis.createClient();
 var mongo = mongojs_1.default('mapTool');
 var config_1 = require("./config");
@@ -272,7 +272,7 @@ nrp.on("gfs:stepDownloaded", function (_a) {
                         var mapHash = md5(model + "-" + parameter + "-" + run + "-" + step + "-" + region);
                         var outFile = path.join(config_1.default.imagePath, mapHash + ".png");
                         var bbox = [-180, 90, 180, -90];
-                        mapGen_1.default(gribFile, bbox)
+                        node_map_maker_1.default(gribFile, bbox)
                             .then(function (image) {
                             image.write(outFile, function (err) {
                                 if (err) {

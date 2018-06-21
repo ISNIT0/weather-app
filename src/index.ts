@@ -8,7 +8,7 @@ import * as cheerio from 'cheerio';
 import * as moment from 'moment';
 import * as Redis from 'redis';
 
-import makeTempMap from '../../node-map-maker';
+import makeTempMap from './mapGen';
 
 const redis = Redis.createClient();
 
@@ -209,7 +209,7 @@ nrp.on(`gfs:stepDownloaded`, function ({ run, step }: any) { // Make Map
                 const outFile = path.join(config.imagePath, `${mapHash}.png`);
                 const bbox = [-180, 90, 180, -90];
                 makeTempMap(gribFile, bbox)
-                    .then(image => {
+                    .then((image: any) => {
                         image.write(outFile, (err: any) => {
                             if (err) {
                                 console.error(`Failed to write file:`, err);
