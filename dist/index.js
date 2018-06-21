@@ -214,7 +214,7 @@ nrp.on("gfs:stepAvailable", function (_a) {
                                 console.info("Found no maps in mapConfig");
                                 return [3 /*break*/, 7];
                             case 2:
-                                phGroups = maps.map(function (m) { return m.parameter.replace(/_/g, ':'); }).join(' ');
+                                phGroups = 'all';
                                 outDir = path.join(config_1.default.downloadPath, run);
                                 outFile = path.join(outDir, step + ".grib2");
                                 _a.label = 3;

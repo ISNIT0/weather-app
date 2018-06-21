@@ -168,7 +168,8 @@ nrp.on(`gfs:stepAvailable`, async function ({ run, step }: any) { // Download St
         } else if (!maps.length) {
             console.info(`Found no maps in mapConfig`);
         } else {
-            const phGroups = maps.map(m => m.parameter.replace(/_/g, ':')).join(' ');
+            // const phGroups = maps.map(m => m.parameter.replace(/_/g, ':')).join(' ');
+            const phGroups = 'all';
             const outDir = path.join(config.downloadPath, run);
             const outFile = path.join(outDir, `${step}.grib2`);
             try {
