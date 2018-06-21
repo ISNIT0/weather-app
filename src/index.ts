@@ -8,6 +8,8 @@ import * as cheerio from 'cheerio';
 import * as moment from 'moment';
 import * as Redis from 'redis';
 
+import makeTempMap from '../../node-map-maker';
+
 const redis = Redis.createClient();
 
 const mongo = mongojs('mapTool');
@@ -180,38 +182,46 @@ nrp.on(`gfs:stepAvailable`, async function ({ run, step }: any) { // Download St
     });
 });
 
-nrp.on(`gfs:stepDownloaded`, async function ({ run, step }: any) { // Convert Step
-    console.info(`Got [gfs:stepDownloaded] message: [run=${run}] [step=${step}]`);
-    const inFile = path.join(config.downloadPath, run, `${step}.grib2`);
-    const outFile = path.join(config.downloadPath, run, `${step}.netcdf`);
-    try {
-        await exec(`gfsscraper grib2netcdf --inFile "${inFile}" --outFile "${outFile}" --wgrib2 "${config.wgrib2}"`);
-        nrp.emit(`gfs:stepConverted`, { run, step });
-    } catch (err) {
-        console.error(`Failed to exec gfsscraper convertStep:`, err);
-    }
-});
+// nrp.on(`gfs:stepDownloaded`, async function ({ run, step }: any) { // Convert Step
+//     console.info(`Got [gfs:stepDownloaded] message: [run=${run}] [step=${step}]`);
+//     const inFile = path.join(config.downloadPath, run, `${step}.grib2`);
+//     const outFile = path.join(config.downloadPath, run, `${step}.netcdf`);
+//     try {
+//         await exec(`gfsscraper grib2netcdf --inFile "${inFile}" --outFile "${outFile}" --wgrib2 "${config.wgrib2}"`);
+//         nrp.emit(`gfs:stepConverted`, { run, step });
+//     } catch (err) {
+//         console.error(`Failed to exec gfsscraper convertStep:`, err);
+//     }
+// });
 
-nrp.on(`gfs:stepConverted`, function ({ run, step }: any) { // Make Map
-    console.info(`Got [gfs:stepConverted] message: [run=${run}] [step=${step}]`);
+nrp.on(`gfs:stepDownloaded`, function ({ run, step }: any) { // Make Map
+    console.info(`Got [gfs:stepDownloaded] message: [run=${run}] [step=${step}]`);
     mongo.mapConfigs.find({ model: 'gfs' }, async function (err: any, mapsToGenerate: any[]) {
         if (err) {
             console.error(`Failed to find map configs:`, err);
         } else if (!mapsToGenerate.length) {
             console.info(`Found no maps in mapConfig`);
         } else {
-            const netcdfFile = path.join(config.downloadPath, run, `${step}.netcdf`);
+            const gribFile = path.join(config.downloadPath, run, `${step}.grib2`);
             for (let { model, parameter, region } of mapsToGenerate) {
                 console.log(`Generating map: ${model}-${parameter}-${run}-${step}-${region}`);
                 const mapHash = <string>md5(`${model}-${parameter}-${run}-${step}-${region}`);
                 const outFile = path.join(config.imagePath, `${mapHash}.png`);
-                const makeMapPath = path.join(__dirname, '../make-map.py');
-                try {
-                    await exec(`python ${makeMapPath} ${netcdfFile} ${parameter} ${outFile}`)
-                    nrp.emit(`gfs:imageGenerated`, { run, step, parameter, region, hash: mapHash });
-                } catch (err) {
-                    console.error(`Failed to exec python ../make-map.py:`, err);
-                }
+                const bbox = [-180, 90, 180, -90];
+                makeTempMap(gribFile, bbox)
+                    .then(image => {
+                        image.write(outFile, (err: any) => {
+                            if (err) {
+                                console.error(`Failed to write file:`, err);
+                                throw new Error(err);
+                            } else {
+                                nrp.emit(`gfs:imageGenerated`, { run, step, parameter, region, hash: mapHash });
+                            }
+                        });
+                    })
+                    .catch(err => {
+                        console.error(`Failed to generate map:`, err);
+                    });
             }
         }
     });
