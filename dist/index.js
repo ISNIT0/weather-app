@@ -214,7 +214,7 @@ nrp.on("gfs:stepAvailable", function (_a) {
                                 console.info("Found no maps in mapConfig");
                                 return [3 /*break*/, 7];
                             case 2:
-                                phGroups = 'all';
+                                phGroups = "TMP:2maboveground LAND:surface";
                                 outDir = path.join(config_1.default.downloadPath, run);
                                 outFile = path.join(outDir, step + ".grib2");
                                 _a.label = 3;
