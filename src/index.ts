@@ -1,24 +1,30 @@
-import md5 = require('md5');
+import * as mysql2 from 'mysql2';
 import * as path from 'path';
 import exec = require('promised-exec');
 import NRP = require('node-redis-pubsub');
-import mongojs from 'mongojs';
 import * as request from 'request-promise-native';
 import * as cheerio from 'cheerio';
 import * as moment from 'moment';
 import * as Redis from 'redis';
 
-import makeTempMap from './mapGen';
-
 const redis = Redis.createClient();
-
-const mongo = mongojs('mapTool');
 
 import config from './config';
 
 const nrp = new NRP({
     scope: ''
 });
+
+const mysql = mysql2.createConnection(config.mysql);
+
+function querySQL<T>(query: string, ...args: any[]): Promise<T> {
+    return new Promise((resolve, reject) => {
+        mysql.query(query, args, function (err, results) {
+            if (err) reject(err);
+            else resolve(results);
+        });
+    });
+}
 
 console.log('Started');
 
@@ -119,7 +125,7 @@ const getRuns = remember(getAvailableGfsRuns, 1000 * 60 * 2);
 const getSteps = remember(getAvailableGfsRunSteps, 1000 * 60 * 2);
 
 async function pollForSteps() {
-    const cursor = await redisGet('gfs:pollCursor');
+    const cursor = await redisGet('pollCursor');
     if (!cursor) {
         console.error(`No Cursor Found!`);
         setTimeout(pollForSteps, 1000 * 60 * 3);
@@ -134,8 +140,8 @@ async function pollForSteps() {
     console.log(`StepCursorIndex is [${stepCursorIndex}]`);
     if (stepCursorIndex !== (steps.length - 1)) {
         const newStep = steps[stepCursorIndex + 1];
-        redisSet('gfs:pollCursor', JSON.stringify({ runCursor, stepCursor: newStep }));
-        nrp.emit(`gfs:stepAvailable`, { run: runCursor, step: leftPad(stepCursor, 3) });
+        redisSet('pollCursor', JSON.stringify({ runCursor, stepCursor: newStep }));
+        nrp.emit(`stepAvailable`, { run: runCursor, step: leftPad(stepCursor, 3) });
         setTimeout(() => pollForSteps(), 1000);
     } else {
         const runs = await getRuns();
@@ -144,8 +150,8 @@ async function pollForSteps() {
         console.log(`RunCursorIndex is [${runCursorIndex}]`);
         if (runCursorIndex !== (runs.length - 1)) {
             const newRun = runs[runCursorIndex + 1];
-            redisSet('gfs:pollCursor', JSON.stringify({ runCursor: newRun, stepCursor: 0 }));
-            nrp.emit(`gfs:stepAvailable`, { run: newRun, step: leftPad(0, 3) });
+            redisSet('pollCursor', JSON.stringify({ runCursor: newRun, stepCursor: 0 }));
+            nrp.emit(`stepAvailable`, { run: newRun, step: leftPad(0, 3) });
             setTimeout(() => pollForSteps(), 1000);
         } else {
             setTimeout(pollForSteps, 1000 * 60 * 3);
@@ -158,85 +164,56 @@ pollForSteps();
 
 
 
+nrp.on(`stepAvailable`, async function ({ run, step, model }: any) { // Download Step
+    console.info(`Got [stepAvailable] message: [run=${run}] [step=${step}]`);
+    const maps = await querySQL<any[]>('SELECT * from `map_configs` WHERE `model` = `?`', model);
 
+    const phGroups = maps.map(m => m.parameter);
 
-nrp.on(`gfs:stepAvailable`, async function ({ run, step }: any) { // Download Step
-    console.info(`Got [gfs:stepAvailable] message: [run=${run}] [step=${step}]`);
-    mongo.mapConfigs.find({ model: 'gfs' }, async function (err: any, maps: any[]) {
-        if (err) {
-            console.error(`Failed to find map configs:`, err);
-        } else if (!maps.length) {
-            console.info(`Found no maps in mapConfig`);
-        } else {
-            // const phGroups = maps.map(m => m.parameter.replace(/_/g, ':')).join(' ');
-            const phGroups = `TMP:2maboveground LAND:surface`;
-            const outDir = path.join(config.downloadPath, run);
-            const outFile = path.join(outDir, `${step}.grib2`);
-            try {
-                await exec(`mkdir -p ${outDir}`);
-                await exec(`gfsscraper downloadStep --outFile "${outFile}" --run "${run}" --step "${step}" --parameterHeightGroups ${phGroups}`);
-                nrp.emit(`gfs:stepDownloaded`, { run, step });
-            } catch (err) {
-                console.error(`Failed to exec gfsscraper downloadStep:`, err);
-            }
+    for (let ph in phGroups) {
+        const outDir = path.join(config.downloadPath, run, step);
+        const outFile = path.join(outDir, `${ph.replace(/:/g, '_')}.grib2`);
+        try {
+            await exec(`mkdir -p ${outDir}`);
+            await exec(`gfsscraper downloadStep --outFile "${outFile}" --run "${run}" --step "${step}" --parameterHeightGroups ${ph}`);
+            nrp.emit(`stepDownloaded`, { run, step, model, parameter: ph });
+        } catch (err) {
+            console.error(`Failed to exec gfsscraper downloadStep:`, err);
         }
-    });
+    }
 });
 
-// nrp.on(`gfs:stepDownloaded`, async function ({ run, step }: any) { // Convert Step
-//     console.info(`Got [gfs:stepDownloaded] message: [run=${run}] [step=${step}]`);
+// nrp.on(`stepDownloaded`, async function ({ run, step }: any) { // Convert Step
+//     console.info(`Got [stepDownloaded] message: [run=${run}] [step=${step}]`);
 //     const inFile = path.join(config.downloadPath, run, `${step}.grib2`);
 //     const outFile = path.join(config.downloadPath, run, `${step}.netcdf`);
 //     try {
 //         await exec(`gfsscraper grib2netcdf --inFile "${inFile}" --outFile "${outFile}" --wgrib2 "${config.wgrib2}"`);
-//         nrp.emit(`gfs:stepConverted`, { run, step });
+//         nrp.emit(`stepConverted`, { run, step });
 //     } catch (err) {
 //         console.error(`Failed to exec gfsscraper convertStep:`, err);
 //     }
 // });
 
-nrp.on(`gfs:stepDownloaded`, function ({ run, step }: any) { // Make Map
-    console.info(`Got [gfs:stepDownloaded] message: [run=${run}] [step=${step}]`);
-    mongo.mapConfigs.find({ model: 'gfs' }, async function (err: any, mapsToGenerate: any[]) {
-        if (err) {
-            console.error(`Failed to find map configs:`, err);
-        } else if (!mapsToGenerate.length) {
-            console.info(`Found no maps in mapConfig`);
-        } else {
-            const gribFile = path.join(config.downloadPath, run, `${step}.grib2`);
-            for (let { model, parameter, region } of mapsToGenerate) {
-                console.log(`Generating map: ${model}-${parameter}-${run}-${step}-${region}`);
-                const mapHash = <string>md5(`${model}-${parameter}-${run}-${step}-${region}`);
-                const outFile = path.join(config.imagePath, `${mapHash}.png`);
-                const bbox = [-180, 90, 180, -90];
-                makeTempMap(gribFile, bbox)
-                    .then((image: any) => {
-                        image.write(outFile, (err: any) => {
-                            if (err) {
-                                console.error(`Failed to write file:`, err);
-                                throw new Error(err);
-                            } else {
-                                nrp.emit(`gfs:imageGenerated`, { run, step, parameter, region, hash: mapHash });
-                            }
-                        });
-                    })
-                    .catch(err => {
-                        console.error(`Failed to generate map:`, err);
-                    });
-            }
-        }
-    });
+nrp.on(`stepDownloaded`, async function ({ run, step, model, parameter }: any) { // Make Map
+    console.info(`Got [stepDownloaded] message: [run=${run}] [step=${step}]`);
+
+    const inFile = path.join(config.downloadPath, run, step, `${parameter}.grib2`);
+    const warpedFile = path.join(config.downloadPath, run, step, `${parameter}.warped.grib2`);
+    const outFile = path.join(config.downloadPath, run, step, `${parameter}.tiff`);
+
+    //GDAL Warp
+    await exec(`gdalwarp -t_srs EPSG:4326 ${inFile} ${warpedFile}`);
+    //GDAL Translate
+    await exec(`gdal_translate -of Gtiff -b 1 ${warpedFile} ${outFile}`);
+    //Cleanup
+    //await exec(`rm ${inFile} && rm ${warpedFile}`);
+    
+    nrp.emit(`stepProcessed`, { run, step, model, parameter });
 });
 
-nrp.on(`gfs:imageGenerated`, function ({ run, step, parameter, region, hash }: any) {
+nrp.on(`stepProcessed`, async function ({ run, step, model, parameter }: any) {
     // Store map hash in mongo
-    console.info(`Got [gfs:imageGenerated] message: [run=${run}] [step=${step}] [parameter=${parameter}] [region=${region}] [hash=${hash}]`);
-    mongo.renderedMaps.insert({
-        run,
-        step,
-        parameter,
-        region,
-        hash,
-        date: new Date()
-    });
+    console.info(`Got [stepProcessed] message: [run=${run}] [step=${step}] [parameter=${parameter}] [model=${model}]`);
+    await querySQL('INSERT INTO `steps_avail` (run, step, model, parameter) VALUES (?, ?, ?, ?)', run, step, model, parameter);
 });
