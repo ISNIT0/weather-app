@@ -215,7 +215,7 @@ nrp.on("stepAvailable", function (_a) {
             switch (_d.label) {
                 case 0:
                     console.info("Got [stepAvailable] message: [run=" + run + "] [step=" + step + "]");
-                    return [4 /*yield*/, querySQL('SELECT * from `map_configs` WHERE `model` = `?`', model)];
+                    return [4 /*yield*/, querySQL('SELECT * from `map_configs` WHERE `model` = ?', model)];
                 case 1:
                     maps = _d.sent();
                     phGroups = maps.map(function (m) { return m.parameter; });
