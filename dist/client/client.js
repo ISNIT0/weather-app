@@ -9,8 +9,8 @@ function leftPad(number, targetLength) {
     return '0'.repeat(Math.max(targetLength - str.length, 0)) + str;
 }
 var target = document.getElementById('frame');
-function makeImgUrl(imageHash) {
-    return "http://209.250.243.93:5000/" + imageHash + ".png";
+function makeImgUrl(model, run, step, parameter, region) {
+    return "/api/" + model + "/" + parameter + "/" + run + "/" + step + "/" + region + ".png";
 }
 function makeItemSelector(title, selectionHandler, items, opts) {
     if (opts === void 0) { opts = {}; }
@@ -36,14 +36,36 @@ function makeSetValue(affect, targetKp) {
         affect.set(targetKp, value);
     };
 }
+var isInitLoad = true;
 var affect = nimble_1.makeRenderLoop(target, {
     selectedModel: 'gfs',
     selectedRun: '',
     selectedStep: {},
-    availableRuns: {}
+    availableRuns: {},
+    selectedParameter: 'TMP_2maboveground',
+    selectedRegion: 'gbr'
 }, function (state, affect, changes) {
     var steps = (nimble_1.get(state, "availableRuns." + state.selectedRun) || []);
     var selectedStepIndex = steps.findIndex(function (step) { return step.step === state.selectedStep.step; });
+    var mapChanged = changes.some(function (ch) { return ch.includes('selectedParameter') || ch.includes('selectedModel'); }) || isInitLoad;
+    if (mapChanged) {
+        $.getJSON("/api/mapRuns/" + state.selectedModel + "/" + state.selectedParameter)
+            .then(function (data) {
+            affect.set('availableRuns', data);
+            var latestRun = Object.keys(data)
+                .map(function (a) { return parseInt(a); })
+                .sort(function (a, b) { return a < b ? 1 : -1; })[0];
+            if (!state.selectedStep) {
+                affect.set('selectedStep', data[latestRun][0]);
+            }
+            if (!state.selectedRun) {
+                affect.set('selectedRun', latestRun);
+            }
+        });
+    }
+    if (isInitLoad) {
+        isInitLoad = false;
+    }
     var favourites = [{
             name: 'GFS UK Pressure',
             value: {
@@ -100,7 +122,7 @@ var affect = nimble_1.makeRenderLoop(target, {
     ];
     var parameters = [
         { name: 'Pressure', value: 'parameters' },
-        { name: 'Temperature 2M', value: 'tmp2m' },
+        { name: 'Temperature 2M', value: 'TMP_2maboveground' },
         { name: 'Wind 2M', value: 'wind2m' },
         { name: 'Effective Cloud', value: 'effCloud' }
     ];
@@ -133,13 +155,13 @@ var affect = nimble_1.makeRenderLoop(target, {
             }, [
                 nimble_1.h('div.img', {
                     style: {
-                        'background-image': "url(" + makeImgUrl(state.selectedStep.hash) + ")"
+                        'background-image': "url(" + makeImgUrl(state.selectedModel, state.selectedRun, state.selectedStep.step, state.selectedParameter, state.selectedRegion) + ")"
                     }
                 }),
                 nimble_1.h('div.img-preload', steps
                     .slice(selectedStepIndex - 3, selectedStepIndex + 3)
                     .map(function (step) {
-                    return nimble_1.h('img', { src: makeImgUrl(step.hash) });
+                    return nimble_1.h('img', { src: makeImgUrl(state.selectedModel, state.selectedRun, step.step, state.selectedParameter, state.selectedRegion) });
                 })),
                 nimble_1.h('div.timebar', {}, [
                     nimble_1.h('select.run-selector', {
@@ -168,15 +190,12 @@ var affect = nimble_1.makeRenderLoop(target, {
         ])
     ]);
 });
-$.getJSON("/api/mapRuns")
-    .then(function (data) {
-    affect.set('availableRuns', data);
-    var latestRun = Object.keys(data)
-        .map(function (a) { return parseInt(a); })
-        .sort(function (a, b) { return a < b ? 1 : -1; })[0];
-    affect.set('selectedRun', latestRun);
-    affect.set('selectedStep', data[latestRun][0]);
-});
+// $.getJSON(`/api/mapData`)
+//     .then((data: any) => {
+//         const { regions, parameters } = data;
+//         affect.set('regions', regions);
+//         affect.set('parameters', parameters);
+//     }); 
 
 },{"jquery":2,"moment":3,"nimble":6}],2:[function(require,module,exports){
 /*!

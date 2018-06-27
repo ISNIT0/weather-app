@@ -14,8 +14,8 @@ function leftPad(number: any, targetLength: number) {
 
 const target = <HTMLElement>document.getElementById('frame');
 
-function makeImgUrl(imageHash: string) {
-    return `http://209.250.243.93:5000/${imageHash}.png`;
+function makeImgUrl(model: string, run: string, step: string, parameter: string, region: string) {
+    return `/api/${model}/${parameter}/${run}/${step}/${region}.png`;
 }
 
 type SelectionItem = {
@@ -62,15 +62,40 @@ type Runs = {
     [runId: string]: Step[]
 }
 
+let isInitLoad = true;
+
 const affect = makeRenderLoop(target, {
     selectedModel: 'gfs',
     selectedRun: '',
     selectedStep: <Step>{},
-    availableRuns: <Runs>{}
+    availableRuns: <Runs>{},
+    selectedParameter: 'TMP_2maboveground',
+    selectedRegion: 'gbr'
 },
     function (state, affect, changes) {
         const steps = <Step[]>(get<Step[]>(state, `availableRuns.${state.selectedRun}`) || []);
         const selectedStepIndex = steps.findIndex((step: any) => step.step === state.selectedStep.step);
+
+        const mapChanged = changes.some(ch => ch.includes('selectedParameter') || ch.includes('selectedModel')) || isInitLoad;
+        if (mapChanged) {
+            $.getJSON(`/api/mapRuns/${state.selectedModel}/${state.selectedParameter}`)
+                .then((data: any) => {
+                    affect.set('availableRuns', data);
+                    const latestRun = Object.keys(data)
+                        .map(a => parseInt(a))
+                        .sort((a, b) => a < b ? 1 : -1)[0];
+                    if (!state.selectedStep) {
+                        affect.set('selectedStep', data[latestRun][0]);
+                    }
+                    if (!state.selectedRun) {
+                        affect.set('selectedRun', latestRun);
+                    }
+                });
+        }
+
+        if (isInitLoad) {
+            isInitLoad = false;
+        }
 
         const favourites = [{
             name: 'GFS UK Pressure',
@@ -131,7 +156,7 @@ const affect = makeRenderLoop(target, {
 
         const parameters = [
             { name: 'Pressure', value: 'parameters' },
-            { name: 'Temperature 2M', value: 'tmp2m' },
+            { name: 'Temperature 2M', value: 'TMP_2maboveground' },
             { name: 'Wind 2M', value: 'wind2m' },
             { name: 'Effective Cloud', value: 'effCloud' }
         ];
@@ -164,13 +189,13 @@ const affect = makeRenderLoop(target, {
                 }, [
                         h('div.img', {
                             style: {
-                                'background-image': `url(${makeImgUrl(state.selectedStep.hash)})`
+                                'background-image': `url(${makeImgUrl(state.selectedModel, state.selectedRun, state.selectedStep.step, state.selectedParameter, state.selectedRegion)})`
                             }
                         }),
                         h('div.img-preload', steps
                             .slice(selectedStepIndex - 3, selectedStepIndex + 3)
                             .map(step => {
-                                return h('img', { src: makeImgUrl(step.hash) })
+                                return h('img', { src: makeImgUrl(state.selectedModel, state.selectedRun, step.step, state.selectedParameter, state.selectedRegion) })
                             })),
                         h('div.timebar', {}, [
                             h('select.run-selector', {
@@ -201,12 +226,9 @@ const affect = makeRenderLoop(target, {
     }
 );
 
-$.getJSON(`/api/mapRuns`)
-    .then((data: any) => {
-        affect.set('availableRuns', data);
-        const latestRun = Object.keys(data)
-            .map(a => parseInt(a))
-            .sort((a, b) => a < b ? 1 : -1)[0];
-        affect.set('selectedRun', latestRun);
-        affect.set('selectedStep', data[latestRun][0]);
-    });
+// $.getJSON(`/api/mapData`)
+//     .then((data: any) => {
+//         const { regions, parameters } = data;
+//         affect.set('regions', regions);
+//         affect.set('parameters', parameters);
+//     });

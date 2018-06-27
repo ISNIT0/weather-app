@@ -10,7 +10,6 @@
   "license": "ISC",
   "dependencies": {
     "@types/express": "4.16.0",
-    "@types/jquery": "3.3.3",
     "@types/morgan": "1.7.35",
     "@types/redis": "2.8.6",
     "browserify": "16.2.2",
@@ -20,6 +19,7 @@
     "moment": "2.22.2",
     "mongojs": "2.6.0",
     "morgan": "1.9.0",
+    "mysql2": "1.5.3",
     "nimble": "git+https://github.com/isnit0/nimble-js",
     "redis": "2.8.0"
   }
