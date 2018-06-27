@@ -161,9 +161,6 @@ async function pollForSteps() {
 
 pollForSteps();
 
-
-
-
 nrp.on(`stepAvailable`, async function ({ run, step, model }: any) { // Download Step
     console.info(`Got [stepAvailable] message: [run=${run}] [step=${step}]`);
     const maps = await querySQL<any[]>('SELECT * from `map_configs` WHERE `model` = `?`', model);

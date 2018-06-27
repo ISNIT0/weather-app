@@ -4,6 +4,8 @@ const config = {
         imagePath: '/srv/images/',
         wgrib2: '/home/user/grib2/wgrib2/wgrib2',
         mysql: {
+            user: 'dev',
+            password: 'password',
             database: 'weather'
         }
     },
