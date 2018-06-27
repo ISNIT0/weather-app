@@ -163,20 +163,21 @@ pollForSteps();
 
 nrp.on(`stepAvailable`, async function ({ run, step, model }: any) { // Download Step
     console.info(`Got [stepAvailable] message: [run=${run}] [step=${step}]`);
-    const maps = await querySQL<any[]>('SELECT * from `map_configs` WHERE `model` = ?', model);
 
-    const phGroups = maps.map(m => m.parameter);
+    try {
+        const maps = await querySQL<any[]>('SELECT * from `map_configs` WHERE `model` = ?', model);
 
-    for (let ph of phGroups) {
-        const outDir = path.join(config.downloadPath, run, step);
-        const outFile = path.join(outDir, `${ph.replace(/:/g, '_')}.grib2`);
-        try {
+        const phGroups = maps.map(m => m.parameter);
+
+        for (let ph of phGroups) {
+            const outDir = path.join(config.downloadPath, run, step);
+            const outFile = path.join(outDir, `${ph.replace(/:/g, '_')}.grib2`);
             await exec(`mkdir -p ${outDir}`);
             await exec(`gfsscraper downloadStep --outFile "${outFile}" --run "${run}" --step "${step}" --parameterHeightGroups ${ph}`);
             nrp.emit(`stepDownloaded`, { run, step, model, parameter: ph });
-        } catch (err) {
-            console.error(`Failed to exec gfsscraper downloadStep:`, err);
         }
+    } catch (err) {
+        console.error(`Failed to exec gfsscraper downloadStep:`, err);
     }
 });
 
@@ -198,15 +199,18 @@ nrp.on(`stepDownloaded`, async function ({ run, step, model, parameter }: any) {
     const inFile = path.join(config.downloadPath, run, step, `${parameter}.grib2`);
     const warpedFile = path.join(config.downloadPath, run, step, `${parameter}.warped.grib2`);
     const outFile = path.join(config.downloadPath, run, step, `${parameter}.tiff`);
+    try {
+        //GDAL Warp
+        await exec(`gdalwarp -t_srs EPSG:4326 ${inFile} ${warpedFile}`);
+        //GDAL Translate
+        await exec(`gdal_translate -of Gtiff -b 1 ${warpedFile} ${outFile}`);
+        //Cleanup
+        //await exec(`rm ${inFile} && rm ${warpedFile}`);
 
-    //GDAL Warp
-    await exec(`gdalwarp -t_srs EPSG:4326 ${inFile} ${warpedFile}`);
-    //GDAL Translate
-    await exec(`gdal_translate -of Gtiff -b 1 ${warpedFile} ${outFile}`);
-    //Cleanup
-    //await exec(`rm ${inFile} && rm ${warpedFile}`);
-
-    nrp.emit(`stepProcessed`, { run, step, model, parameter });
+        nrp.emit(`stepProcessed`, { run, step, model, parameter });
+    } catch (err) {
+        console.error(`Failed to exec gfsscraper downloadStep:`, err);
+    }
 });
 
 nrp.on(`stepProcessed`, async function ({ run, step, model, parameter }: any) {

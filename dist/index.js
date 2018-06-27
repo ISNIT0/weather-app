@@ -215,20 +215,20 @@ nrp.on("stepAvailable", function (_a) {
             switch (_b.label) {
                 case 0:
                     console.info("Got [stepAvailable] message: [run=" + run + "] [step=" + step + "]");
-                    return [4 /*yield*/, querySQL('SELECT * from `map_configs` WHERE `model` = ?', model)];
+                    _b.label = 1;
                 case 1:
+                    _b.trys.push([1, 8, , 9]);
+                    return [4 /*yield*/, querySQL('SELECT * from `map_configs` WHERE `model` = ?', model)];
+                case 2:
                     maps = _b.sent();
                     phGroups = maps.map(function (m) { return m.parameter; });
                     _i = 0, phGroups_1 = phGroups;
-                    _b.label = 2;
-                case 2:
-                    if (!(_i < phGroups_1.length)) return [3 /*break*/, 8];
+                    _b.label = 3;
+                case 3:
+                    if (!(_i < phGroups_1.length)) return [3 /*break*/, 7];
                     ph = phGroups_1[_i];
                     outDir = path.join(config_1.default.downloadPath, run, step);
                     outFile = path.join(outDir, ph.replace(/:/g, '_') + ".grib2");
-                    _b.label = 3;
-                case 3:
-                    _b.trys.push([3, 6, , 7]);
                     return [4 /*yield*/, exec("mkdir -p " + outDir)];
                 case 4:
                     _b.sent();
@@ -236,15 +236,16 @@ nrp.on("stepAvailable", function (_a) {
                 case 5:
                     _b.sent();
                     nrp.emit("stepDownloaded", { run: run, step: step, model: model, parameter: ph });
-                    return [3 /*break*/, 7];
+                    _b.label = 6;
                 case 6:
+                    _i++;
+                    return [3 /*break*/, 3];
+                case 7: return [3 /*break*/, 9];
+                case 8:
                     err_1 = _b.sent();
                     console.error("Failed to exec gfsscraper downloadStep:", err_1);
-                    return [3 /*break*/, 7];
-                case 7:
-                    _i++;
-                    return [3 /*break*/, 2];
-                case 8: return [2 /*return*/];
+                    return [3 /*break*/, 9];
+                case 9: return [2 /*return*/];
             }
         });
     });
@@ -263,7 +264,7 @@ nrp.on("stepAvailable", function (_a) {
 nrp.on("stepDownloaded", function (_a) {
     var run = _a.run, step = _a.step, model = _a.model, parameter = _a.parameter;
     return __awaiter(this, void 0, void 0, function () {
-        var inFile, warpedFile, outFile;
+        var inFile, warpedFile, outFile, err_2;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -271,20 +272,28 @@ nrp.on("stepDownloaded", function (_a) {
                     inFile = path.join(config_1.default.downloadPath, run, step, parameter + ".grib2");
                     warpedFile = path.join(config_1.default.downloadPath, run, step, parameter + ".warped.grib2");
                     outFile = path.join(config_1.default.downloadPath, run, step, parameter + ".tiff");
+                    _b.label = 1;
+                case 1:
+                    _b.trys.push([1, 4, , 5]);
                     //GDAL Warp
                     return [4 /*yield*/, exec("gdalwarp -t_srs EPSG:4326 " + inFile + " " + warpedFile)];
-                case 1:
+                case 2:
                     //GDAL Warp
                     _b.sent();
                     //GDAL Translate
                     return [4 /*yield*/, exec("gdal_translate -of Gtiff -b 1 " + warpedFile + " " + outFile)];
-                case 2:
+                case 3:
                     //GDAL Translate
                     _b.sent();
                     //Cleanup
                     //await exec(`rm ${inFile} && rm ${warpedFile}`);
                     nrp.emit("stepProcessed", { run: run, step: step, model: model, parameter: parameter });
-                    return [2 /*return*/];
+                    return [3 /*break*/, 5];
+                case 4:
+                    err_2 = _b.sent();
+                    console.error("Failed to exec gfsscraper downloadStep:", err_2);
+                    return [3 /*break*/, 5];
+                case 5: return [2 /*return*/];
             }
         });
     });
