@@ -305,7 +305,7 @@ nrp.on("stepProcessed", function (_a) {
                     // Store map hash in mongo
                     console.info("Got [stepProcessed] message: [run=" + run + "] [step=" + step + "] [parameter=" + parameter + "] [model=" + model + "]");
                     stepTime = moment(run, 'YYYYMMDDHH').add(+step, 'hour').toDate();
-                    return [4 /*yield*/, querySQL('INSERT IGNORE `steps_avail` (run, step, model, parameter, step_time) VALUES (?, ?, ?, ?)', run, step, model, parameter, stepTime)];
+                    return [4 /*yield*/, querySQL('INSERT IGNORE `steps_avail` (run, step, model, parameter, step_time) VALUES (?, ?, ?, ?, ?)', run, step, model, parameter, stepTime)];
                 case 1:
                     _b.sent();
                     return [2 /*return*/];
