@@ -264,7 +264,7 @@ nrp.on("stepAvailable", function (_a) {
 nrp.on("stepDownloaded", function (_a) {
     var run = _a.run, step = _a.step, model = _a.model, parameter = _a.parameter;
     return __awaiter(this, void 0, void 0, function () {
-        var inFile, warpedFile, outFile, err_2;
+        var inFile, warpedFile, err_2;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -272,7 +272,6 @@ nrp.on("stepDownloaded", function (_a) {
                     parameter = parameter.replace(/:/g, '_');
                     inFile = path.join(config_1.default.downloadPath, run, step, parameter + ".grib2");
                     warpedFile = path.join(config_1.default.downloadPath, run, step, parameter + ".warped.grib2");
-                    outFile = path.join(config_1.default.downloadPath, run, step, parameter + ".tiff");
                     _b.label = 1;
                 case 1:
                     _b.trys.push([1, 3, , 4]);
@@ -299,12 +298,14 @@ nrp.on("stepDownloaded", function (_a) {
 nrp.on("stepProcessed", function (_a) {
     var run = _a.run, step = _a.step, model = _a.model, parameter = _a.parameter;
     return __awaiter(this, void 0, void 0, function () {
+        var stepTime;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
                     // Store map hash in mongo
                     console.info("Got [stepProcessed] message: [run=" + run + "] [step=" + step + "] [parameter=" + parameter + "] [model=" + model + "]");
-                    return [4 /*yield*/, querySQL('INSERT INTO `steps_avail` (run, step, model, parameter) VALUES (?, ?, ?, ?)', run, step, model, parameter)];
+                    stepTime = moment(run, 'YYYYMMDDHH').add(+step, 'hour').toDate();
+                    return [4 /*yield*/, querySQL('INSERT INTO `steps_avail` (run, step, model, parameter, step_time) VALUES (?, ?, ?, ?)', run, step, model, parameter, stepTime)];
                 case 1:
                     _b.sent();
                     return [2 /*return*/];

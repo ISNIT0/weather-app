@@ -198,7 +198,7 @@ nrp.on(`stepDownloaded`, async function ({ run, step, model, parameter }: any) {
     parameter = parameter.replace(/:/g, '_');
     const inFile = path.join(config.downloadPath, run, step, `${parameter}.grib2`);
     const warpedFile = path.join(config.downloadPath, run, step, `${parameter}.warped.grib2`);
-    const outFile = path.join(config.downloadPath, run, step, `${parameter}.tiff`);
+
     try {
         //GDAL Warp
         await exec(`gdalwarp -t_srs EPSG:3857 ${inFile} ${warpedFile}`);
@@ -216,5 +216,6 @@ nrp.on(`stepDownloaded`, async function ({ run, step, model, parameter }: any) {
 nrp.on(`stepProcessed`, async function ({ run, step, model, parameter }: any) {
     // Store map hash in mongo
     console.info(`Got [stepProcessed] message: [run=${run}] [step=${step}] [parameter=${parameter}] [model=${model}]`);
-    await querySQL('INSERT INTO `steps_avail` (run, step, model, parameter) VALUES (?, ?, ?, ?)', run, step, model, parameter);
+    const stepTime = moment(run, 'YYYYMMDDHH').add(+step, 'hour').toDate();
+    await querySQL('INSERT INTO `steps_avail` (run, step, model, parameter, step_time) VALUES (?, ?, ?, ?)', run, step, model, parameter, stepTime);
 });
