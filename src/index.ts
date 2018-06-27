@@ -167,7 +167,7 @@ nrp.on(`stepAvailable`, async function ({ run, step, model }: any) { // Download
 
     const phGroups = maps.map(m => m.parameter);
 
-    for (let ph in phGroups) {
+    for (let ph of phGroups) {
         const outDir = path.join(config.downloadPath, run, step);
         const outFile = path.join(outDir, `${ph.replace(/:/g, '_')}.grib2`);
         try {
