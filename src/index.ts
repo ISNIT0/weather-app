@@ -174,9 +174,7 @@ nrp.on(`stepAvailable`, async function ({ run, step, model }: any) { // Download
             const outFile = path.join(outDir, `${ph.replace(/:/g, '_')}.grib2`);
             await exec(`mkdir -p ${outDir}`);
             await exec(`gfsscraper downloadStep --outFile "${outFile}" --run "${run}" --step "${step}" --parameterHeightGroups ${ph}`);
-            setTimeout(() => { //TODO: Remove timeout
-                nrp.emit(`stepDownloaded`, { run, step, model, parameter: ph });
-            }, 1000);
+            nrp.emit(`stepDownloaded`, { run, step, model, parameter: ph });
         }
     } catch (err) {
         console.error(`Failed to exec gfsscraper downloadStep:`, err);
