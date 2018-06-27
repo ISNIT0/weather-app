@@ -275,26 +275,23 @@ nrp.on("stepDownloaded", function (_a) {
                     outFile = path.join(config_1.default.downloadPath, run, step, parameter + ".tiff");
                     _b.label = 1;
                 case 1:
-                    _b.trys.push([1, 4, , 5]);
+                    _b.trys.push([1, 3, , 4]);
                     //GDAL Warp
                     return [4 /*yield*/, exec("gdalwarp -t_srs EPSG:3857 " + inFile + " " + warpedFile)];
                 case 2:
                     //GDAL Warp
                     _b.sent();
                     //GDAL Translate
-                    return [4 /*yield*/, exec("gdal_translate -of Gtiff -b 1 " + warpedFile + " " + outFile)];
-                case 3:
-                    //GDAL Translate
-                    _b.sent();
+                    // await exec(`gdal_translate -of Gtiff -b 1 ${warpedFile} ${outFile}`);
                     //Cleanup
                     //await exec(`rm ${inFile} && rm ${warpedFile}`);
                     nrp.emit("stepProcessed", { run: run, step: step, model: model, parameter: parameter });
-                    return [3 /*break*/, 5];
-                case 4:
+                    return [3 /*break*/, 4];
+                case 3:
                     err_2 = _b.sent();
                     console.error("Failed to exec gfsscraper downloadStep:", err_2);
-                    return [3 /*break*/, 5];
-                case 5: return [2 /*return*/];
+                    return [3 /*break*/, 4];
+                case 4: return [2 /*return*/];
             }
         });
     });
