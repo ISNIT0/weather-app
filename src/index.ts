@@ -217,5 +217,5 @@ nrp.on(`stepProcessed`, async function ({ run, step, model, parameter }: any) {
     // Store map hash in mongo
     console.info(`Got [stepProcessed] message: [run=${run}] [step=${step}] [parameter=${parameter}] [model=${model}]`);
     const stepTime = moment(run, 'YYYYMMDDHH').add(+step, 'hour').toDate();
-    await querySQL('INSERT INTO `steps_avail` (run, step, model, parameter, step_time) VALUES (?, ?, ?, ?)', run, step, model, parameter, stepTime);
+    await querySQL('INSERT IGNORE `steps_avail` (run, step, model, parameter, step_time) VALUES (?, ?, ?, ?)', run, step, model, parameter, stepTime);
 });
