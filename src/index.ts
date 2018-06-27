@@ -201,7 +201,7 @@ nrp.on(`stepDownloaded`, async function ({ run, step, model, parameter }: any) {
     const outFile = path.join(config.downloadPath, run, step, `${parameter}.tiff`);
     try {
         //GDAL Warp
-        await exec(`gdalwarp -t_srs EPSG:3857 ${inFile} ${warpedFile}`);
+        await exec(`gdalwarp -t_srs EPSG:4326 ${inFile} ${warpedFile}`);
         //GDAL Translate
         await exec(`gdal_translate -of Gtiff -b 1 ${warpedFile} ${outFile}`);
         //Cleanup

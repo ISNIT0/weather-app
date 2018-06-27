@@ -277,7 +277,7 @@ nrp.on("stepDownloaded", function (_a) {
                 case 1:
                     _b.trys.push([1, 4, , 5]);
                     //GDAL Warp
-                    return [4 /*yield*/, exec("gdalwarp -t_srs EPSG:3857 " + inFile + " " + warpedFile)];
+                    return [4 /*yield*/, exec("gdalwarp -t_srs EPSG:4326 " + inFile + " " + warpedFile)];
                 case 2:
                     //GDAL Warp
                     _b.sent();
