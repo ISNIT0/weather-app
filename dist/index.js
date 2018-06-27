@@ -182,7 +182,7 @@ function pollForSteps() {
                     if (!(stepCursorIndex !== (steps.length - 1))) return [3 /*break*/, 3];
                     newStep = steps[stepCursorIndex + 1];
                     redisSet('pollCursor', JSON.stringify({ runCursor: runCursor, stepCursor: newStep }));
-                    nrp.emit("stepAvailable", { run: runCursor, step: leftPad(stepCursor, 3) });
+                    nrp.emit("stepAvailable", { run: runCursor, step: leftPad(stepCursor, 3), model: 'gfs' });
                     setTimeout(function () { return pollForSteps(); }, 1000);
                     return [3 /*break*/, 5];
                 case 3: return [4 /*yield*/, getRuns()];
@@ -194,7 +194,7 @@ function pollForSteps() {
                     if (runCursorIndex !== (runs.length - 1)) {
                         newRun = runs[runCursorIndex + 1];
                         redisSet('pollCursor', JSON.stringify({ runCursor: newRun, stepCursor: 0 }));
-                        nrp.emit("stepAvailable", { run: newRun, step: leftPad(0, 3) });
+                        nrp.emit("stepAvailable", { run: newRun, step: leftPad(0, 3), model: 'gfs' });
                         setTimeout(function () { return pollForSteps(); }, 1000);
                     }
                     else {

@@ -141,7 +141,7 @@ async function pollForSteps() {
     if (stepCursorIndex !== (steps.length - 1)) {
         const newStep = steps[stepCursorIndex + 1];
         redisSet('pollCursor', JSON.stringify({ runCursor, stepCursor: newStep }));
-        nrp.emit(`stepAvailable`, { run: runCursor, step: leftPad(stepCursor, 3) });
+        nrp.emit(`stepAvailable`, { run: runCursor, step: leftPad(stepCursor, 3), model: 'gfs' });
         setTimeout(() => pollForSteps(), 1000);
     } else {
         const runs = await getRuns();
@@ -151,7 +151,7 @@ async function pollForSteps() {
         if (runCursorIndex !== (runs.length - 1)) {
             const newRun = runs[runCursorIndex + 1];
             redisSet('pollCursor', JSON.stringify({ runCursor: newRun, stepCursor: 0 }));
-            nrp.emit(`stepAvailable`, { run: newRun, step: leftPad(0, 3) });
+            nrp.emit(`stepAvailable`, { run: newRun, step: leftPad(0, 3), model: 'gfs' });
             setTimeout(() => pollForSteps(), 1000);
         } else {
             setTimeout(pollForSteps, 1000 * 60 * 3);
@@ -205,7 +205,7 @@ nrp.on(`stepDownloaded`, async function ({ run, step, model, parameter }: any) {
     await exec(`gdal_translate -of Gtiff -b 1 ${warpedFile} ${outFile}`);
     //Cleanup
     //await exec(`rm ${inFile} && rm ${warpedFile}`);
-    
+
     nrp.emit(`stepProcessed`, { run, step, model, parameter });
 });
 
