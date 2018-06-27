@@ -210,56 +210,42 @@ pollForSteps();
 nrp.on("stepAvailable", function (_a) {
     var run = _a.run, step = _a.step, model = _a.model;
     return __awaiter(this, void 0, void 0, function () {
-        var maps, phGroups, _loop_1, _i, phGroups_1, ph, err_1;
+        var maps, phGroups, _i, phGroups_1, ph, outDir, outFile, err_1;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
                     console.info("Got [stepAvailable] message: [run=" + run + "] [step=" + step + "]");
                     _b.label = 1;
                 case 1:
-                    _b.trys.push([1, 7, , 8]);
+                    _b.trys.push([1, 8, , 9]);
                     return [4 /*yield*/, querySQL('SELECT * from `map_configs` WHERE `model` = ?', model)];
                 case 2:
                     maps = _b.sent();
                     phGroups = maps.map(function (m) { return m.parameter; });
-                    _loop_1 = function (ph) {
-                        var outDir, outFile;
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    outDir = path.join(config_1.default.downloadPath, run, step);
-                                    outFile = path.join(outDir, ph.replace(/:/g, '_') + ".grib2");
-                                    return [4 /*yield*/, exec("mkdir -p " + outDir)];
-                                case 1:
-                                    _a.sent();
-                                    return [4 /*yield*/, exec("gfsscraper downloadStep --outFile \"" + outFile + "\" --run \"" + run + "\" --step \"" + step + "\" --parameterHeightGroups " + ph)];
-                                case 2:
-                                    _a.sent();
-                                    setTimeout(function () {
-                                        nrp.emit("stepDownloaded", { run: run, step: step, model: model, parameter: ph });
-                                    }, 1000);
-                                    return [2 /*return*/];
-                            }
-                        });
-                    };
                     _i = 0, phGroups_1 = phGroups;
                     _b.label = 3;
                 case 3:
-                    if (!(_i < phGroups_1.length)) return [3 /*break*/, 6];
+                    if (!(_i < phGroups_1.length)) return [3 /*break*/, 7];
                     ph = phGroups_1[_i];
-                    return [5 /*yield**/, _loop_1(ph)];
+                    outDir = path.join(config_1.default.downloadPath, run, step);
+                    outFile = path.join(outDir, ph.replace(/:/g, '_') + ".grib2");
+                    return [4 /*yield*/, exec("mkdir -p " + outDir)];
                 case 4:
                     _b.sent();
-                    _b.label = 5;
+                    return [4 /*yield*/, exec("gfsscraper downloadStep --outFile \"" + outFile + "\" --run \"" + run + "\" --step \"" + step + "\" --parameterHeightGroups " + ph)];
                 case 5:
+                    _b.sent();
+                    nrp.emit("stepDownloaded", { run: run, step: step, model: model, parameter: ph });
+                    _b.label = 6;
+                case 6:
                     _i++;
                     return [3 /*break*/, 3];
-                case 6: return [3 /*break*/, 8];
-                case 7:
+                case 7: return [3 /*break*/, 9];
+                case 8:
                     err_1 = _b.sent();
                     console.error("Failed to exec gfsscraper downloadStep:", err_1);
-                    return [3 /*break*/, 8];
-                case 8: return [2 /*return*/];
+                    return [3 /*break*/, 9];
+                case 9: return [2 /*return*/];
             }
         });
     });
