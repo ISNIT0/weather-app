@@ -195,7 +195,7 @@ nrp.on(`stepAvailable`, async function ({ run, step, model }: any) { // Download
 
 nrp.on(`stepDownloaded`, async function ({ run, step, model, parameter }: any) { // Make Map
     console.info(`Got [stepDownloaded] message: [run=${run}] [step=${step}]`);
-
+    parameter = parameter.replace(/:/g, '_');
     const inFile = path.join(config.downloadPath, run, step, `${parameter}.grib2`);
     const warpedFile = path.join(config.downloadPath, run, step, `${parameter}.warped.grib2`);
     const outFile = path.join(config.downloadPath, run, step, `${parameter}.tiff`);
