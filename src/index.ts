@@ -174,7 +174,9 @@ nrp.on(`stepAvailable`, async function ({ run, step, model }: any) { // Download
             const outFile = path.join(outDir, `${ph.replace(/:/g, '_')}.grib2`);
             await exec(`mkdir -p ${outDir}`);
             await exec(`gfsscraper downloadStep --outFile "${outFile}" --run "${run}" --step "${step}" --parameterHeightGroups ${ph}`);
-            nrp.emit(`stepDownloaded`, { run, step, model, parameter: ph });
+            setTimeout(() => { //TODO: Remove timeout
+                nrp.emit(`stepDownloaded`, { run, step, model, parameter: ph });
+            }, 1000);
         }
     } catch (err) {
         console.error(`Failed to exec gfsscraper downloadStep:`, err);
@@ -200,8 +202,10 @@ nrp.on(`stepDownloaded`, async function ({ run, step, model, parameter }: any) {
     const warpedFile = path.join(config.downloadPath, run, step, `${parameter}.warped.grib2`);
     const outFile = path.join(config.downloadPath, run, step, `${parameter}.tiff`);
     try {
-        //GDAL Warp and Translate
-        await exec(`gdalwarp -t_srs EPSG:3857 ${inFile} ${warpedFile} && gdal_translate -of Gtiff -b 1 ${warpedFile} ${outFile}`);
+        //GDAL Warp
+        await exec(`gdalwarp -t_srs EPSG:3857 ${inFile} ${warpedFile}`);
+        //GDAL Translate
+        await exec(`gdal_translate -of Gtiff -b 1 ${warpedFile} ${outFile}`);
         //Cleanup
         //await exec(`rm ${inFile} && rm ${warpedFile}`);
 
