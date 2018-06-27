@@ -35,22 +35,34 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var md5 = require("md5");
+var mysql2 = require("mysql2");
 var path = require("path");
 var exec = require("promised-exec");
 var NRP = require("node-redis-pubsub");
-var mongojs_1 = require("mongojs");
 var request = require("request-promise-native");
 var cheerio = require("cheerio");
 var moment = require("moment");
 var Redis = require("redis");
-var mapGen_1 = require("./mapGen");
 var redis = Redis.createClient();
-var mongo = mongojs_1.default('mapTool');
 var config_1 = require("./config");
 var nrp = new NRP({
     scope: ''
 });
+var mysql = mysql2.createConnection(config_1.default.mysql);
+function querySQL(query) {
+    var args = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        args[_i - 1] = arguments[_i];
+    }
+    return new Promise(function (resolve, reject) {
+        mysql.query(query, args, function (err, results) {
+            if (err)
+                reject(err);
+            else
+                resolve(results);
+        });
+    });
+}
 console.log('Started');
 function remember(func, timeout) {
     var lastVal = null;
@@ -151,7 +163,7 @@ function pollForSteps() {
         var cursor, _a, runCursor, stepCursor, steps, stepCursorIndex, newStep, runs, runCursorIndex, newRun;
         return __generator(this, function (_b) {
             switch (_b.label) {
-                case 0: return [4 /*yield*/, redisGet('gfs:pollCursor')];
+                case 0: return [4 /*yield*/, redisGet('pollCursor')];
                 case 1:
                     cursor = _b.sent();
                     if (!cursor) {
@@ -169,8 +181,8 @@ function pollForSteps() {
                     console.log("StepCursorIndex is [" + stepCursorIndex + "]");
                     if (!(stepCursorIndex !== (steps.length - 1))) return [3 /*break*/, 3];
                     newStep = steps[stepCursorIndex + 1];
-                    redisSet('gfs:pollCursor', JSON.stringify({ runCursor: runCursor, stepCursor: newStep }));
-                    nrp.emit("gfs:stepAvailable", { run: runCursor, step: leftPad(stepCursor, 3) });
+                    redisSet('pollCursor', JSON.stringify({ runCursor: runCursor, stepCursor: newStep }));
+                    nrp.emit("stepAvailable", { run: runCursor, step: leftPad(stepCursor, 3) });
                     setTimeout(function () { return pollForSteps(); }, 1000);
                     return [3 /*break*/, 5];
                 case 3: return [4 /*yield*/, getRuns()];
@@ -181,8 +193,8 @@ function pollForSteps() {
                     console.log("RunCursorIndex is [" + runCursorIndex + "]");
                     if (runCursorIndex !== (runs.length - 1)) {
                         newRun = runs[runCursorIndex + 1];
-                        redisSet('gfs:pollCursor', JSON.stringify({ runCursor: newRun, stepCursor: 0 }));
-                        nrp.emit("gfs:stepAvailable", { run: newRun, step: leftPad(0, 3) });
+                        redisSet('pollCursor', JSON.stringify({ runCursor: newRun, stepCursor: 0 }));
+                        nrp.emit("stepAvailable", { run: newRun, step: leftPad(0, 3) });
                         setTimeout(function () { return pollForSteps(); }, 1000);
                     }
                     else {
@@ -195,119 +207,104 @@ function pollForSteps() {
     });
 }
 pollForSteps();
-nrp.on("gfs:stepAvailable", function (_a) {
-    var run = _a.run, step = _a.step;
+nrp.on("stepAvailable", function (_a) {
+    var run = _a.run, step = _a.step, model = _a.model;
     return __awaiter(this, void 0, void 0, function () {
-        return __generator(this, function (_b) {
-            console.info("Got [gfs:stepAvailable] message: [run=" + run + "] [step=" + step + "]");
-            mongo.mapConfigs.find({ model: 'gfs' }, function (err, maps) {
-                return __awaiter(this, void 0, void 0, function () {
-                    var phGroups, outDir, outFile, err_1;
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0:
-                                if (!err) return [3 /*break*/, 1];
-                                console.error("Failed to find map configs:", err);
-                                return [3 /*break*/, 7];
-                            case 1:
-                                if (!!maps.length) return [3 /*break*/, 2];
-                                console.info("Found no maps in mapConfig");
-                                return [3 /*break*/, 7];
-                            case 2:
-                                phGroups = "TMP:2maboveground LAND:surface";
-                                outDir = path.join(config_1.default.downloadPath, run);
-                                outFile = path.join(outDir, step + ".grib2");
-                                _a.label = 3;
-                            case 3:
-                                _a.trys.push([3, 6, , 7]);
-                                return [4 /*yield*/, exec("mkdir -p " + outDir)];
-                            case 4:
-                                _a.sent();
-                                return [4 /*yield*/, exec("gfsscraper downloadStep --outFile \"" + outFile + "\" --run \"" + run + "\" --step \"" + step + "\" --parameterHeightGroups " + phGroups)];
-                            case 5:
-                                _a.sent();
-                                nrp.emit("gfs:stepDownloaded", { run: run, step: step });
-                                return [3 /*break*/, 7];
-                            case 6:
-                                err_1 = _a.sent();
-                                console.error("Failed to exec gfsscraper downloadStep:", err_1);
-                                return [3 /*break*/, 7];
-                            case 7: return [2 /*return*/];
-                        }
-                    });
-                });
-            });
-            return [2 /*return*/];
+        var maps, phGroups, _b, _c, _i, ph, outDir, outFile, err_1;
+        return __generator(this, function (_d) {
+            switch (_d.label) {
+                case 0:
+                    console.info("Got [stepAvailable] message: [run=" + run + "] [step=" + step + "]");
+                    return [4 /*yield*/, querySQL('SELECT * from `map_configs` WHERE `model` = `?`', model)];
+                case 1:
+                    maps = _d.sent();
+                    phGroups = maps.map(function (m) { return m.parameter; });
+                    _b = [];
+                    for (_c in phGroups)
+                        _b.push(_c);
+                    _i = 0;
+                    _d.label = 2;
+                case 2:
+                    if (!(_i < _b.length)) return [3 /*break*/, 8];
+                    ph = _b[_i];
+                    outDir = path.join(config_1.default.downloadPath, run, step);
+                    outFile = path.join(outDir, ph.replace(/:/g, '_') + ".grib2");
+                    _d.label = 3;
+                case 3:
+                    _d.trys.push([3, 6, , 7]);
+                    return [4 /*yield*/, exec("mkdir -p " + outDir)];
+                case 4:
+                    _d.sent();
+                    return [4 /*yield*/, exec("gfsscraper downloadStep --outFile \"" + outFile + "\" --run \"" + run + "\" --step \"" + step + "\" --parameterHeightGroups " + ph)];
+                case 5:
+                    _d.sent();
+                    nrp.emit("stepDownloaded", { run: run, step: step, model: model, parameter: ph });
+                    return [3 /*break*/, 7];
+                case 6:
+                    err_1 = _d.sent();
+                    console.error("Failed to exec gfsscraper downloadStep:", err_1);
+                    return [3 /*break*/, 7];
+                case 7:
+                    _i++;
+                    return [3 /*break*/, 2];
+                case 8: return [2 /*return*/];
+            }
         });
     });
 });
-// nrp.on(`gfs:stepDownloaded`, async function ({ run, step }: any) { // Convert Step
-//     console.info(`Got [gfs:stepDownloaded] message: [run=${run}] [step=${step}]`);
+// nrp.on(`stepDownloaded`, async function ({ run, step }: any) { // Convert Step
+//     console.info(`Got [stepDownloaded] message: [run=${run}] [step=${step}]`);
 //     const inFile = path.join(config.downloadPath, run, `${step}.grib2`);
 //     const outFile = path.join(config.downloadPath, run, `${step}.netcdf`);
 //     try {
 //         await exec(`gfsscraper grib2netcdf --inFile "${inFile}" --outFile "${outFile}" --wgrib2 "${config.wgrib2}"`);
-//         nrp.emit(`gfs:stepConverted`, { run, step });
+//         nrp.emit(`stepConverted`, { run, step });
 //     } catch (err) {
 //         console.error(`Failed to exec gfsscraper convertStep:`, err);
 //     }
 // });
-nrp.on("gfs:stepDownloaded", function (_a) {
-    var run = _a.run, step = _a.step;
-    console.info("Got [gfs:stepDownloaded] message: [run=" + run + "] [step=" + step + "]");
-    mongo.mapConfigs.find({ model: 'gfs' }, function (err, mapsToGenerate) {
-        return __awaiter(this, void 0, void 0, function () {
-            var gribFile, _loop_1, _i, mapsToGenerate_1, _a, model, parameter, region;
-            return __generator(this, function (_b) {
-                if (err) {
-                    console.error("Failed to find map configs:", err);
-                }
-                else if (!mapsToGenerate.length) {
-                    console.info("Found no maps in mapConfig");
-                }
-                else {
-                    gribFile = path.join(config_1.default.downloadPath, run, step + ".grib2");
-                    _loop_1 = function (model, parameter, region) {
-                        console.log("Generating map: " + model + "-" + parameter + "-" + run + "-" + step + "-" + region);
-                        var mapHash = md5(model + "-" + parameter + "-" + run + "-" + step + "-" + region);
-                        var outFile = path.join(config_1.default.imagePath, mapHash + ".png");
-                        var bbox = [-180, 90, 180, -90];
-                        mapGen_1.default(gribFile, bbox)
-                            .then(function (image) {
-                            image.write(outFile, function (err) {
-                                if (err) {
-                                    console.error("Failed to write file:", err);
-                                    throw new Error(err);
-                                }
-                                else {
-                                    nrp.emit("gfs:imageGenerated", { run: run, step: step, parameter: parameter, region: region, hash: mapHash });
-                                }
-                            });
-                        })
-                            .catch(function (err) {
-                            console.error("Failed to generate map:", err);
-                        });
-                    };
-                    for (_i = 0, mapsToGenerate_1 = mapsToGenerate; _i < mapsToGenerate_1.length; _i++) {
-                        _a = mapsToGenerate_1[_i], model = _a.model, parameter = _a.parameter, region = _a.region;
-                        _loop_1(model, parameter, region);
-                    }
-                }
-                return [2 /*return*/];
-            });
+nrp.on("stepDownloaded", function (_a) {
+    var run = _a.run, step = _a.step, model = _a.model, parameter = _a.parameter;
+    return __awaiter(this, void 0, void 0, function () {
+        var inFile, warpedFile, outFile;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    console.info("Got [stepDownloaded] message: [run=" + run + "] [step=" + step + "]");
+                    inFile = path.join(config_1.default.downloadPath, run, step, parameter + ".grib2");
+                    warpedFile = path.join(config_1.default.downloadPath, run, step, parameter + ".warped.grib2");
+                    outFile = path.join(config_1.default.downloadPath, run, step, parameter + ".tiff");
+                    //GDAL Warp
+                    return [4 /*yield*/, exec("gdalwarp -t_srs EPSG:4326 " + inFile + " " + warpedFile)];
+                case 1:
+                    //GDAL Warp
+                    _b.sent();
+                    //GDAL Translate
+                    return [4 /*yield*/, exec("gdal_translate -of Gtiff -b 1 " + warpedFile + " " + outFile)];
+                case 2:
+                    //GDAL Translate
+                    _b.sent();
+                    //Cleanup
+                    //await exec(`rm ${inFile} && rm ${warpedFile}`);
+                    nrp.emit("stepProcessed", { run: run, step: step, model: model, parameter: parameter });
+                    return [2 /*return*/];
+            }
         });
     });
 });
-nrp.on("gfs:imageGenerated", function (_a) {
-    var run = _a.run, step = _a.step, parameter = _a.parameter, region = _a.region, hash = _a.hash;
-    // Store map hash in mongo
-    console.info("Got [gfs:imageGenerated] message: [run=" + run + "] [step=" + step + "] [parameter=" + parameter + "] [region=" + region + "] [hash=" + hash + "]");
-    mongo.renderedMaps.insert({
-        run: run,
-        step: step,
-        parameter: parameter,
-        region: region,
-        hash: hash,
-        date: new Date()
+nrp.on("stepProcessed", function (_a) {
+    var run = _a.run, step = _a.step, model = _a.model, parameter = _a.parameter;
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    // Store map hash in mongo
+                    console.info("Got [stepProcessed] message: [run=" + run + "] [step=" + step + "] [parameter=" + parameter + "] [model=" + model + "]");
+                    return [4 /*yield*/, querySQL('INSERT INTO `steps_avail` (run, step, model, parameter) VALUES (?, ?, ?, ?)', run, step, model, parameter)];
+                case 1:
+                    _b.sent();
+                    return [2 /*return*/];
+            }
+        });
     });
 });
