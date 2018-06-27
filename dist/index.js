@@ -269,6 +269,7 @@ nrp.on("stepDownloaded", function (_a) {
             switch (_b.label) {
                 case 0:
                     console.info("Got [stepDownloaded] message: [run=" + run + "] [step=" + step + "]");
+                    parameter = parameter.replace(/:/g, '_');
                     inFile = path.join(config_1.default.downloadPath, run, step, parameter + ".grib2");
                     warpedFile = path.join(config_1.default.downloadPath, run, step, parameter + ".warped.grib2");
                     outFile = path.join(config_1.default.downloadPath, run, step, parameter + ".tiff");
