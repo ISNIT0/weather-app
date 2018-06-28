@@ -66,10 +66,15 @@ var bboxes = {
     gbr: '-1268069.9600000000,-4760425.7990000000,665953.5476000000,-3306272.7860000000',
     ger: '468425.218589,7383071.671322,1770893.071311,5939997.905069'
 };
+var styles = {
+    TMP_2maboveground: 'temp',
+    PRES_surface: 'pressure'
+};
 app.get('/api/:model/:parameter/:run/:step/:region.png', function (req, res) {
     var _a = req.params, model = _a.model, parameter = _a.parameter, run = _a.run, step = _a.step, region = _a.region;
     var bbox = bboxes[region];
-    res.redirect("http://178.128.34.87:1337/map/" + model + "/" + run + "/" + step + "/" + parameter + ".png?bbox=" + bbox + "&width=1280&height=962");
+    var style = styles[parameter];
+    res.redirect("http://178.128.34.87:1337/map/" + style + "/" + model + "/" + run + "/" + step + "/" + parameter + ".png?bbox=" + bbox + "&width=1280&height=962");
 });
 app.get('/api/mapRuns/:model/:parameter', function (req, res) {
     return __awaiter(this, void 0, void 0, function () {

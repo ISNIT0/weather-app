@@ -34,11 +34,17 @@ let bboxes: any = {
     ger: '468425.218589,7383071.671322,1770893.071311,5939997.905069'
 };
 
+let styles: any = {
+    TMP_2maboveground: 'temp',
+    PRES_surface: 'pressure'
+};
+
 app.get('/api/:model/:parameter/:run/:step/:region.png', (req, res) => {
     const { model, parameter, run, step, region } = req.params;
     const bbox = bboxes[region];
+    const style = styles[parameter];
 
-    res.redirect(`http://178.128.34.87:1337/map/${model}/${run}/${step}/${parameter}.png?bbox=${bbox}&width=1280&height=962`);
+    res.redirect(`http://maps.fastweather.io/map/${style}/${model}/${run}/${step}/${parameter}.png?bbox=${bbox}&width=1280&height=962`);
 });
 
 app.get('/api/mapRuns/:model/:parameter', async function (req, res) {
