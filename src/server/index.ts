@@ -44,7 +44,7 @@ app.get('/api/:model/:parameter/:run/:step/:region.png', (req, res) => {
     const bbox = bboxes[region];
     const style = styles[parameter];
 
-    res.redirect(`http://maps.fastweather.io/map/${style}/${model}/${run}/${step}/${parameter}.png?bbox=${bbox}&width=1280&height=962`);
+    res.redirect(`http://maps.fastweather.app/map/${style}/${model}/${run}/${step}/${parameter}.png?bbox=${bbox}&width=1280&height=962`);
 });
 
 app.get('/api/mapRuns/:model/:parameter', async function (req, res) {
