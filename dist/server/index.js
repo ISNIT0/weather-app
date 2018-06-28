@@ -74,7 +74,7 @@ app.get('/api/:model/:parameter/:run/:step/:region.png', function (req, res) {
     var _a = req.params, model = _a.model, parameter = _a.parameter, run = _a.run, step = _a.step, region = _a.region;
     var bbox = bboxes[region];
     var style = styles[parameter];
-    res.redirect("http://maps.fastweather.io/map/" + style + "/" + model + "/" + run + "/" + step + "/" + parameter + ".png?bbox=" + bbox + "&width=1280&height=962");
+    res.redirect("http://maps.fastweather.app/map/" + style + "/" + model + "/" + run + "/" + step + "/" + parameter + ".png?bbox=" + bbox + "&width=1280&height=962");
 });
 app.get('/api/mapRuns/:model/:parameter', function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
