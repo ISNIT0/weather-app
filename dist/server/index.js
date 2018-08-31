@@ -34,12 +34,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var _this = this;
 Object.defineProperty(exports, "__esModule", { value: true });
 var config_1 = require("./config");
 var express = require("express");
 var redis = require("redis");
 var morgan = require("morgan");
 var mysql2 = require("mysql2");
+var exec = require("promised-exec");
 var mysql = mysql2.createConnection(config_1.default.mysql);
 function querySQL(query) {
     var args = [];
@@ -62,20 +64,43 @@ rClient.on("error", function (err) {
 var app = express();
 app.use(morgan('dev'));
 app.use(express.static('dist/client'));
+app.use(express.static('images'));
 var bboxes = {
-    gbr: '-1268069.9600000000,-4760425.7990000000,665953.5476000000,-3306272.7860000000',
-    ger: '468425.218589,7383071.671322,1770893.071311,5939997.905069'
+    gbr: [-13.291912, 2.763414, 49.731026, 61.046795],
+    ger: [-10.9333000000, 53.6500000000, 2.5000000000, 59.2333000000]
 };
 var styles = {
     TMP_2maboveground: 'temp',
     PRES_surface: 'pressure'
 };
-app.get('/api/:model/:parameter/:run/:step/:region.png', function (req, res) {
-    var _a = req.params, model = _a.model, parameter = _a.parameter, run = _a.run, step = _a.step, region = _a.region;
-    var bbox = bboxes[region];
-    var style = styles[parameter];
-    res.redirect("http://maps.fastweather.app/map/" + style + "/" + model + "/" + run + "/" + step + "/" + parameter + ".png?bbox=" + bbox + "&width=1280&height=962");
-});
+app.get('/api/:model/:parameter/:run/:step/:region.png', function (req, res) { return __awaiter(_this, void 0, void 0, function () {
+    var _a, model, parameter, run, step, region, bbox, style, err_1;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                _a = req.params, model = _a.model, parameter = _a.parameter, run = _a.run, step = _a.step, region = _a.region;
+                bbox = bboxes[region];
+                style = styles[parameter];
+                _b.label = 1;
+            case 1:
+                _b.trys.push([1, 4, , 5]);
+                return [4 /*yield*/, exec("mkdir -p " + config_1.default.imgDir + "/" + model + "/" + run + "/" + step + "/" + parameter)];
+            case 2:
+                _b.sent();
+                return [4 /*yield*/, exec("python map-generators/" + style + ".py " + config_1.default.gribDir + "/" + model + "/" + run + "/" + step + "/" + parameter + ".grib2 " + bbox.join(' ') + " " + config_1.default.imgDir + "/" + model + "/" + run + "/" + step + "/" + parameter + "/" + region + ".png")];
+            case 3:
+                _b.sent();
+                res.redirect(config_1.default.urlPath + "/images/" + model + "/" + run + "/" + step + "/" + parameter + "/" + region + ".png");
+                return [3 /*break*/, 5];
+            case 4:
+                err_1 = _b.sent();
+                console.error(err_1);
+                res.status(500).send({ error: true, msg: 'Failed to generate map' });
+                return [3 /*break*/, 5];
+            case 5: return [2 /*return*/];
+        }
+    });
+}); });
 app.get('/api/mapRuns/:model/:parameter', function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
         var _a, model, parameter, stepsAndRuns, stepsByRun;

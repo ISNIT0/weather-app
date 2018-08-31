@@ -21,6 +21,7 @@
     "morgan": "1.9.0",
     "mysql2": "1.5.3",
     "nimble": "git+https://github.com/isnit0/nimble-js",
+    "promised-exec": "1.0.1",
     "redis": "2.8.0"
   }
 }

@@ -4,6 +4,7 @@ import * as express from 'express';
 import * as redis from 'redis';
 import * as morgan from 'morgan';
 import * as mysql2 from 'mysql2';
+import * as exec from 'promised-exec';
 
 const mysql = mysql2.createConnection(config.mysql);
 
@@ -28,10 +29,11 @@ const app = express();
 app.use(morgan('dev'));
 
 app.use(express.static('dist/client'));
+app.use(express.static('images'));
 
 let bboxes: any = {
-    gbr: '-1268069.9600000000,-4760425.7990000000,665953.5476000000,-3306272.7860000000',
-    ger: '468425.218589,7383071.671322,1770893.071311,5939997.905069'
+    gbr: [-13.291912, 2.763414, 49.731026, 61.046795],
+    ger: [-10.9333000000, 53.6500000000, 2.5000000000, 59.2333000000]
 };
 
 let styles: any = {
@@ -39,12 +41,21 @@ let styles: any = {
     PRES_surface: 'pressure'
 };
 
-app.get('/api/:model/:parameter/:run/:step/:region.png', (req, res) => {
+app.get('/api/:model/:parameter/:run/:step/:region.png', async (req, res) => {
     const { model, parameter, run, step, region } = req.params;
     const bbox = bboxes[region];
     const style = styles[parameter];
 
-    res.redirect(`http://maps.fastweather.app/map/${style}/${model}/${run}/${step}/${parameter}.png?bbox=${bbox}&width=1280&height=962`);
+    // res.redirect(`http://maps.fastweather.app/map/${style}/${model}/${run}/${step}/${parameter}.png?bbox=${bbox}&width=1280&height=962`);
+
+    try {
+        await exec(`mkdir -p ${config.imgDir}/${model}/${run}/${step}/${parameter}`);
+        await exec(`python map-generators/${style}.py ${config.gribDir}/${model}/${run}/${step}/${parameter}.grib2 ${bbox.join(' ')} ${config.imgDir}/${model}/${run}/${step}/${parameter}/${region}.png`);
+        res.redirect(`${config.urlPath}/images/${model}/${run}/${step}/${parameter}/${region}.png`)
+    } catch (err) {
+        console.error(err);
+        res.status(500).send({ error: true, msg: 'Failed to generate map' });
+    }
 });
 
 app.get('/api/mapRuns/:model/:parameter', async function (req, res) {
