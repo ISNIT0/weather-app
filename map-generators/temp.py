@@ -37,6 +37,7 @@ x, y = m(grid_lon, grid_lat)
 cs = m.pcolormesh(x,y,data,shading='flat',cmap=plt.cm.jet)
 
 m.drawcoastlines()
+m.drawcountries()
 #m.drawmapboundary()
 #m.drawparallels(np.arange(-90.,120.,30.),labels=[1,0,0,0])
 #m.drawmeridians(np.arange(-180.,180.,60.),labels=[0,0,0,1])
