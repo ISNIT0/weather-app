@@ -41,7 +41,7 @@ async function workOnQueue() {
     if (queue.length && currentWorkers < maxWorkers) {
         console.info(`Queue is [${queue.length}] items long`);
         currentWorkers += 1;
-        await queue.pop();
+        await queue.pop()();
         currentWorkers -= 1;
         workOnQueue();
         console.info(`Queue is [${queue.length}] items long`);

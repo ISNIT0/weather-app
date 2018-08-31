@@ -102,7 +102,7 @@ function workOnQueue() {
                     if (!(queue.length && currentWorkers < maxWorkers)) return [3 /*break*/, 2];
                     console.info("Queue is [" + queue.length + "] items long");
                     currentWorkers += 1;
-                    return [4 /*yield*/, queue.pop()];
+                    return [4 /*yield*/, queue.pop()()];
                 case 1:
                     _a.sent();
                     currentWorkers -= 1;
