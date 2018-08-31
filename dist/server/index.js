@@ -179,7 +179,8 @@ app.get('/api/:model/:parameter/:run/:step/:region.png', function (req, res) { r
             case 3:
                 err_1 = _b.sent();
                 console.error(err_1);
-                res.status(500).send({ error: true, msg: 'Failed to generate map' });
+                // res.status(500).send({ error: true, msg: 'Failed to generate map' });
+                res.redirect(config_1.default.urlPath + "/images/" + model + "/" + run + "/" + step + "/" + parameter + "/" + region + ".png");
                 return [3 /*break*/, 4];
             case 4: return [2 /*return*/];
         }
