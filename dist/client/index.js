@@ -73,25 +73,25 @@ var affect = nimble_1.makeRenderLoop(target, {
                 parameter: 'pressure'
             }
         }, {
-            name: 'GFS UK Pressure',
+            name: 'GFS UK Temperature',
             value: {
                 model: 'gfs',
                 region: 'gbr',
-                parameter: 'pressure'
+                parameter: 'TMP_2maboveground'
             }
         }, {
-            name: 'GFS UK Pressure',
+            name: 'GFS UK Precipitation',
             value: {
                 model: 'gfs',
                 region: 'gbr',
-                parameter: 'pressure'
+                parameter: 'APCP_surface'
             }
         }, {
-            name: 'GFS UK Pressure',
+            name: 'GFS UK Low Cloud',
             value: {
                 model: 'gfs',
                 region: 'gbr',
-                parameter: 'pressure'
+                parameter: 'TCDC_lowcloudlayer'
             }
         }];
     var models = [
@@ -99,18 +99,6 @@ var affect = nimble_1.makeRenderLoop(target, {
             name: 'GFS Op',
             value: 'gfs'
         },
-        {
-            name: 'GFS Ens',
-            value: 'gfsEns'
-        },
-        {
-            name: 'EC Op',
-            value: 'ecOp'
-        },
-        {
-            name: 'EC Ens',
-            value: 'ecEns'
-        }
     ];
     var regions = [
         { name: 'United Kingdom', value: 'gbr' },
@@ -120,10 +108,13 @@ var affect = nimble_1.makeRenderLoop(target, {
         { name: 'United States', value: 'usa' }
     ];
     var parameters = [
-        { name: 'Pressure', value: 'parameters' },
+        { name: 'Pressure', value: 'PRES_surface' },
         { name: 'Temperature 2M', value: 'TMP_2maboveground' },
-        { name: 'Wind 2M', value: 'wind2m' },
-        { name: 'Effective Cloud', value: 'effCloud' }
+        { name: 'Temperature Min', value: 'TMIN_2maboveground' },
+        { name: 'Temperature Max', value: 'TMAX_2maboveground' },
+        // { name: 'Wind 2M', value: 'wind2m' },
+        { name: 'Low Cloud', value: 'TCDC_lowcloudlayer' },
+        { name: 'Precipitation', value: 'APCP_surface' }
     ];
     return nimble_1.h('div.app', [
         nimble_1.h('div.row', [
