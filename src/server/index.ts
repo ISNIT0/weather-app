@@ -92,6 +92,7 @@ app.get('/api/:model/:parameter/:run/:step/:region.png', async (req, res) => {
             await releaseWorker();
             res.redirect(`${config.urlPath}/images/${model}/${run}/${step}/${parameter}/${region}.png`);
         } catch (err) {
+            await releaseWorker();
             console.error(err);
             res.status(500).send({ error: true, msg: 'Failed to generate map' });
         }

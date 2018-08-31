@@ -125,9 +125,9 @@ app.get('/api/:model/:parameter/:run/:step/:region.png', function (req, res) { r
                 }
                 if (!fileExists) return [3 /*break*/, 1];
                 res.redirect(config_1.default.urlPath + "/images/" + model + "/" + run + "/" + step + "/" + parameter + "/" + region + ".png");
-                return [3 /*break*/, 7];
+                return [3 /*break*/, 8];
             case 1:
-                _b.trys.push([1, 6, , 7]);
+                _b.trys.push([1, 6, , 8]);
                 return [4 /*yield*/, claimWorker()];
             case 2:
                 _b.sent();
@@ -141,13 +141,16 @@ app.get('/api/:model/:parameter/:run/:step/:region.png', function (req, res) { r
             case 5:
                 _b.sent();
                 res.redirect(config_1.default.urlPath + "/images/" + model + "/" + run + "/" + step + "/" + parameter + "/" + region + ".png");
-                return [3 /*break*/, 7];
+                return [3 /*break*/, 8];
             case 6:
                 err_1 = _b.sent();
+                return [4 /*yield*/, releaseWorker()];
+            case 7:
+                _b.sent();
                 console.error(err_1);
                 res.status(500).send({ error: true, msg: 'Failed to generate map' });
-                return [3 /*break*/, 7];
-            case 7: return [2 /*return*/];
+                return [3 /*break*/, 8];
+            case 8: return [2 /*return*/];
         }
     });
 }); });
