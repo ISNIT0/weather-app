@@ -103,7 +103,8 @@ var styles = {
     TMIN_2maboveground: 'temp',
     TMAX_2maboveground: 'temp',
     TMP_2maboveground: 'temp',
-    PRES_surface: 'pressure'
+    PRES_surface: 'pressure',
+    APCP_surface: 'precip'
 };
 app.get('/api/:model/:parameter/:run/:step/:region.png', function (req, res) { return __awaiter(_this, void 0, void 0, function () {
     var _a, model, parameter, run, step, region, bbox, style, fileExists, imgPath, err_1;

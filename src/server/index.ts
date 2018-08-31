@@ -64,7 +64,8 @@ let styles: any = {
     TMIN_2maboveground: 'temp',
     TMAX_2maboveground: 'temp',
     TMP_2maboveground: 'temp',
-    PRES_surface: 'pressure'
+    PRES_surface: 'pressure',
+    APCP_surface: 'precip'
 };
 
 app.get('/api/:model/:parameter/:run/:step/:region.png', async (req, res) => {
