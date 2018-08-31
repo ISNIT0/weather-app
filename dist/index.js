@@ -264,34 +264,25 @@ nrp.on("stepAvailable", function (_a) {
 nrp.on("stepDownloaded", function (_a) {
     var run = _a.run, step = _a.step, model = _a.model, parameter = _a.parameter;
     return __awaiter(this, void 0, void 0, function () {
-        var inFile, warpedFile, err_2;
+        var inFile, warpedFile;
         return __generator(this, function (_b) {
-            switch (_b.label) {
-                case 0:
-                    console.info("Got [stepDownloaded] message: [run=" + run + "] [step=" + step + "]");
-                    parameter = parameter.replace(/:/g, '_');
-                    inFile = path.join(config_1.default.downloadPath, run, step, parameter + ".grib2");
-                    warpedFile = path.join(config_1.default.downloadPath, run, step, parameter + ".warped.grib2");
-                    _b.label = 1;
-                case 1:
-                    _b.trys.push([1, 3, , 4]);
-                    //GDAL Warp
-                    return [4 /*yield*/, exec("gdalwarp -t_srs EPSG:3857 " + inFile + " " + warpedFile)];
-                case 2:
-                    //GDAL Warp
-                    _b.sent();
-                    //GDAL Translate
-                    // await exec(`gdal_translate -of Gtiff -b 1 ${warpedFile} ${outFile}`);
-                    //Cleanup
-                    //await exec(`rm ${inFile} && rm ${warpedFile}`);
-                    nrp.emit("stepProcessed", { run: run, step: step, model: model, parameter: parameter });
-                    return [3 /*break*/, 4];
-                case 3:
-                    err_2 = _b.sent();
-                    console.error("Failed to exec gfsscraper downloadStep:", err_2);
-                    return [3 /*break*/, 4];
-                case 4: return [2 /*return*/];
+            console.info("Got [stepDownloaded] message: [run=" + run + "] [step=" + step + "]");
+            parameter = parameter.replace(/:/g, '_');
+            inFile = path.join(config_1.default.downloadPath, run, step, parameter + ".grib2");
+            warpedFile = path.join(config_1.default.downloadPath, run, step, parameter + ".warped.grib2");
+            try {
+                //GDAL Warp
+                // await exec(`gdalwarp -t_srs EPSG:3857 ${inFile} ${warpedFile}`);
+                //GDAL Translate
+                // await exec(`gdal_translate -of Gtiff -b 1 ${warpedFile} ${outFile}`);
+                //Cleanup
+                //await exec(`rm ${inFile} && rm ${warpedFile}`);
+                nrp.emit("stepProcessed", { run: run, step: step, model: model, parameter: parameter });
             }
+            catch (err) {
+                console.error("Failed to exec gfsscraper downloadStep:", err);
+            }
+            return [2 /*return*/];
         });
     });
 });

@@ -1,6 +1,6 @@
 const config = {
     production: {
-        downloadPath: '/home/user/download/gfs/',
+        downloadPath: '/srv/gribs',
         imagePath: '/srv/images/',
         wgrib2: '/home/user/grib2/wgrib2/wgrib2',
         mysql: {
