@@ -39,10 +39,12 @@ function enqueue(func: () => Promise<any>) {
 
 async function workOnQueue() {
     if (queue.length && currentWorkers < maxWorkers) {
+        console.info(`Queue is [${queue.length}] items long`);
         currentWorkers += 1;
         await queue.pop();
         currentWorkers -= 1;
         workOnQueue();
+        console.info(`Queue is [${queue.length}] items long`);
     } else {
         setTimeout(workOnQueue, 100);
     }
