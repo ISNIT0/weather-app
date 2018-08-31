@@ -57,67 +57,34 @@ function querySQL(query) {
         });
     });
 }
-var maxWorkers = 3;
+var maxWorkers = 5;
 var currentWorkers = 0;
-var queue = [];
-function enqueue(func) {
-    var _this = this;
-    return new Promise(function (resolve, reject) { return __awaiter(_this, void 0, void 0, function () {
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    if (!(currentWorkers >= maxWorkers)) return [3 /*break*/, 1];
-                    queue.push(function () {
-                        return __awaiter(this, void 0, void 0, function () {
-                            return __generator(this, function (_a) {
-                                switch (_a.label) {
-                                    case 0: return [4 /*yield*/, func()];
-                                    case 1:
-                                        _a.sent();
-                                        resolve();
-                                        return [2 /*return*/];
-                                }
-                            });
-                        });
-                    });
-                    return [3 /*break*/, 3];
-                case 1:
-                    currentWorkers += 1;
-                    return [4 /*yield*/, func()];
-                case 2:
-                    _a.sent();
-                    currentWorkers -= 1;
-                    resolve();
-                    _a.label = 3;
-                case 3: return [2 /*return*/];
-            }
-        });
-    }); });
-}
-function workOnQueue() {
+//This is all pretty horrible
+function claimWorker() {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    if (!(queue.length && currentWorkers < maxWorkers)) return [3 /*break*/, 2];
-                    console.info("Queue is [" + queue.length + "] items long");
-                    currentWorkers += 1;
-                    return [4 /*yield*/, queue.pop()()];
-                case 1:
-                    _a.sent();
-                    currentWorkers -= 1;
-                    workOnQueue();
-                    console.info("Queue is [" + queue.length + "] items long");
-                    return [3 /*break*/, 3];
-                case 2:
-                    setTimeout(workOnQueue, 100);
-                    _a.label = 3;
-                case 3: return [2 /*return*/];
-            }
+            return [2 /*return*/, new Promise(function (resolve, reject) {
+                    if (currentWorkers < maxWorkers) {
+                        currentWorkers++;
+                        resolve();
+                    }
+                    else {
+                        setTimeout(function () {
+                            claimWorker().then(resolve);
+                        }, 100);
+                    }
+                })];
         });
     });
 }
-workOnQueue();
+function releaseWorker() {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            currentWorkers--;
+            return [2 /*return*/, Promise.resolve()];
+        });
+    });
+}
 var rClient = redis.createClient();
 rClient.on("error", function (err) {
     console.error("Redis Error ", err);
@@ -137,7 +104,6 @@ var styles = {
     PRES_surface: 'pressure'
 };
 app.get('/api/:model/:parameter/:run/:step/:region.png', function (req, res) { return __awaiter(_this, void 0, void 0, function () {
-    var _this = this;
     var _a, model, parameter, run, step, region, bbox, style, fileExists, imgPath, err_1;
     return __generator(this, function (_b) {
         switch (_b.label) {
@@ -156,26 +122,29 @@ app.get('/api/:model/:parameter/:run/:step/:region.png', function (req, res) { r
                 }
                 if (!fileExists) return [3 /*break*/, 1];
                 res.redirect(config_1.default.urlPath + "/images/" + model + "/" + run + "/" + step + "/" + parameter + "/" + region + ".png");
-                return [3 /*break*/, 4];
+                return [3 /*break*/, 7];
             case 1:
-                _b.trys.push([1, 3, , 4]);
-                return [4 /*yield*/, enqueue(function () { return __awaiter(_this, void 0, void 0, function () {
-                        return __generator(this, function (_a) {
-                            return [2 /*return*/, exec("mkdir -p " + config_1.default.imgDir + "/" + model + "/" + run + "/" + step + "/" + parameter)
-                                    .then(function () { return exec("python map-generators/" + style + ".py " + config_1.default.gribDir + "/" + model + "/" + run + "/" + step + "/" + parameter + ".grib2 " + bbox.join(' ') + " " + config_1.default.imgDir + "/" + model + "/" + run + "/" + step + "/" + parameter + "/" + region + ".png"); })];
-                        });
-                    }); })];
+                _b.trys.push([1, 6, , 7]);
+                return [4 /*yield*/, claimWorker()];
             case 2:
                 _b.sent();
-                res.redirect(config_1.default.urlPath + "/images/" + model + "/" + run + "/" + step + "/" + parameter + "/" + region + ".png");
-                return [3 /*break*/, 4];
+                return [4 /*yield*/, exec("mkdir -p " + config_1.default.imgDir + "/" + model + "/" + run + "/" + step + "/" + parameter)];
             case 3:
+                _b.sent();
+                return [4 /*yield*/, exec("python map-generators/" + style + ".py " + config_1.default.gribDir + "/" + model + "/" + run + "/" + step + "/" + parameter + ".grib2 " + bbox.join(' ') + " " + config_1.default.imgDir + "/" + model + "/" + run + "/" + step + "/" + parameter + "/" + region + ".png")];
+            case 4:
+                _b.sent();
+                return [4 /*yield*/, releaseWorker()];
+            case 5:
+                _b.sent();
+                res.redirect(config_1.default.urlPath + "/images/" + model + "/" + run + "/" + step + "/" + parameter + "/" + region + ".png");
+                return [3 /*break*/, 7];
+            case 6:
                 err_1 = _b.sent();
                 console.error(err_1);
-                // res.status(500).send({ error: true, msg: 'Failed to generate map' });
-                res.redirect(config_1.default.urlPath + "/images/" + model + "/" + run + "/" + step + "/" + parameter + "/" + region + ".png");
-                return [3 /*break*/, 4];
-            case 4: return [2 /*return*/];
+                res.status(500).send({ error: true, msg: 'Failed to generate map' });
+                return [3 /*break*/, 7];
+            case 7: return [2 /*return*/];
         }
     });
 }); });

@@ -5,6 +5,7 @@ import * as redis from 'redis';
 import * as morgan from 'morgan';
 import * as mysql2 from 'mysql2';
 import * as exec from 'promised-exec';
+import { resolve } from 'url';
 
 const mysql = mysql2.createConnection(config.mysql);
 
@@ -17,39 +18,27 @@ function querySQL<T>(query: string, ...args: any[]): Promise<T> {
     });
 }
 
-const maxWorkers = 3;
+const maxWorkers = 5;
 let currentWorkers = 0;
 
-const queue: any[] = [];
-function enqueue(func: () => Promise<any>) {
-    return new Promise(async (resolve, reject) => {
-        if (currentWorkers >= maxWorkers) {
-            queue.push(async function () {
-                await func();
-                resolve();
-            });
-        } else {
-            currentWorkers += 1;
-            await func();
-            currentWorkers -= 1;
+//This is all pretty horrible
+async function claimWorker() {
+    return new Promise((resolve, reject) => {
+        if (currentWorkers < maxWorkers) {
+            currentWorkers++;
             resolve();
+        } else {
+            setTimeout(() => {
+                claimWorker().then(resolve);
+            }, 100);
         }
     });
 }
 
-async function workOnQueue() {
-    if (queue.length && currentWorkers < maxWorkers) {
-        console.info(`Queue is [${queue.length}] items long`);
-        currentWorkers += 1;
-        await queue.pop()();
-        currentWorkers -= 1;
-        workOnQueue();
-        console.info(`Queue is [${queue.length}] items long`);
-    } else {
-        setTimeout(workOnQueue, 100);
-    }
+async function releaseWorker() {
+    currentWorkers--;
+    return Promise.resolve();
 }
-workOnQueue();
 
 const rClient = redis.createClient();
 
@@ -94,15 +83,14 @@ app.get('/api/:model/:parameter/:run/:step/:region.png', async (req, res) => {
         res.redirect(`${config.urlPath}/images/${model}/${run}/${step}/${parameter}/${region}.png`);
     } else {
         try {
-            await enqueue(async () => {
-                return exec(`mkdir -p ${config.imgDir}/${model}/${run}/${step}/${parameter}`)
-                    .then(() => exec(`python map-generators/${style}.py ${config.gribDir}/${model}/${run}/${step}/${parameter}.grib2 ${bbox.join(' ')} ${config.imgDir}/${model}/${run}/${step}/${parameter}/${region}.png`));
-            });
+            await claimWorker();
+            await exec(`mkdir -p ${config.imgDir}/${model}/${run}/${step}/${parameter}`);
+            await exec(`python map-generators/${style}.py ${config.gribDir}/${model}/${run}/${step}/${parameter}.grib2 ${bbox.join(' ')} ${config.imgDir}/${model}/${run}/${step}/${parameter}/${region}.png`);
+            await releaseWorker();
             res.redirect(`${config.urlPath}/images/${model}/${run}/${step}/${parameter}/${region}.png`);
         } catch (err) {
             console.error(err);
-            // res.status(500).send({ error: true, msg: 'Failed to generate map' });
-            res.redirect(`${config.urlPath}/images/${model}/${run}/${step}/${parameter}/${region}.png`);
+            res.status(500).send({ error: true, msg: 'Failed to generate map' });
         }
     }
 });
