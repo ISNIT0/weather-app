@@ -17,6 +17,37 @@ function querySQL<T>(query: string, ...args: any[]): Promise<T> {
     });
 }
 
+const maxWorkers = 3;
+let currentWorkers = 0;
+
+const queue: any[] = [];
+function enqueue(func: () => Promise<any>) {
+    return new Promise(async (resolve, reject) => {
+        if (currentWorkers >= maxWorkers) {
+            queue.push(async function () {
+                await func();
+                resolve();
+            });
+        } else {
+            currentWorkers += 1;
+            await func();
+            currentWorkers -= 1;
+            resolve();
+        }
+    });
+}
+
+async function workOnQueue() {
+    if (queue.length && currentWorkers < maxWorkers) {
+        currentWorkers += 1;
+        await queue.pop();
+        currentWorkers -= 1;
+        workOnQueue();
+    } else {
+        setTimeout(workOnQueue, 100);
+    }
+}
+workOnQueue();
 
 const rClient = redis.createClient();
 
@@ -61,8 +92,10 @@ app.get('/api/:model/:parameter/:run/:step/:region.png', async (req, res) => {
         res.redirect(`${config.urlPath}/images/${model}/${run}/${step}/${parameter}/${region}.png`);
     } else {
         try {
-            await exec(`mkdir -p ${config.imgDir}/${model}/${run}/${step}/${parameter}`);
-            await exec(`python map-generators/${style}.py ${config.gribDir}/${model}/${run}/${step}/${parameter}.grib2 ${bbox.join(' ')} ${config.imgDir}/${model}/${run}/${step}/${parameter}/${region}.png`);
+            await enqueue(async () => {
+                await exec(`mkdir -p ${config.imgDir}/${model}/${run}/${step}/${parameter}`);
+                await exec(`python map-generators/${style}.py ${config.gribDir}/${model}/${run}/${step}/${parameter}.grib2 ${bbox.join(' ')} ${config.imgDir}/${model}/${run}/${step}/${parameter}/${region}.png`);
+            });
             res.redirect(`${config.urlPath}/images/${model}/${run}/${step}/${parameter}/${region}.png`);
         } catch (err) {
             console.error(err);
