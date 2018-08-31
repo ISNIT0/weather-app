@@ -17,7 +17,7 @@ plt.figure(figsize=(2400.0/float(DPI),1220.0/float(DPI)))
 #grib = '../download/gfs/2018083100/168/TMP_2maboveground.grib2'
 grbs = pygrib.open(sys.argv[1])
 
-grb = grbs.select(name='2 metre temperature')[0]
+grb = grbs.select()[0]
 data = grb.values
 
 # need to shift data grid longitudes from (0..360) to (-180..180)
