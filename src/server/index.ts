@@ -47,14 +47,25 @@ app.get('/api/:model/:parameter/:run/:step/:region.png', async (req, res) => {
     const style = styles[parameter];
 
     // res.redirect(`http://maps.fastweather.app/map/${style}/${model}/${run}/${step}/${parameter}.png?bbox=${bbox}&width=1280&height=962`);
-
+    let fileExists = false;
     try {
-        await exec(`mkdir -p ${config.imgDir}/${model}/${run}/${step}/${parameter}`);
-        await exec(`python map-generators/${style}.py ${config.gribDir}/${model}/${run}/${step}/${parameter}.grib2 ${bbox.join(' ')} ${config.imgDir}/${model}/${run}/${step}/${parameter}/${region}.png`);
-        res.redirect(`${config.urlPath}/images/${model}/${run}/${step}/${parameter}/${region}.png`)
-    } catch (err) {
-        console.error(err);
-        res.status(500).send({ error: true, msg: 'Failed to generate map' });
+        const imgPath = `${config.imgDir}/${model}/${run}/${step}/${parameter}/${region}.png`;
+        require('fs').statSync(imgPath)
+        fileExists = true;
+    } catch (e) {
+        fileExists = false;
+    }
+    if (fileExists) {
+        res.redirect(`${config.urlPath}/images/${model}/${run}/${step}/${parameter}/${region}.png`);
+    } else {
+        try {
+            await exec(`mkdir -p ${config.imgDir}/${model}/${run}/${step}/${parameter}`);
+            await exec(`python map-generators/${style}.py ${config.gribDir}/${model}/${run}/${step}/${parameter}.grib2 ${bbox.join(' ')} ${config.imgDir}/${model}/${run}/${step}/${parameter}/${region}.png`);
+            res.redirect(`${config.urlPath}/images/${model}/${run}/${step}/${parameter}/${region}.png`);
+        } catch (err) {
+            console.error(err);
+            res.status(500).send({ error: true, msg: 'Failed to generate map' });
+        }
     }
 });
 

@@ -10,7 +10,7 @@ function leftPad(number, targetLength) {
 }
 var target = document.getElementById('frame');
 function makeImgUrl(model, run, step, parameter, region) {
-    return "/api/" + model + "/" + parameter + "/" + run + "/" + step + "/" + region + ".png";
+    return "/api/" + model + "/" + parameter + "/" + run + "/" + leftPad(step, 3) + "/" + region + ".png";
 }
 function makeItemSelector(title, selectionHandler, items, opts) {
     if (opts === void 0) { opts = {}; }

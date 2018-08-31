@@ -15,7 +15,7 @@ function leftPad(number: any, targetLength: number) {
 const target = <HTMLElement>document.getElementById('frame');
 
 function makeImgUrl(model: string, run: string, step: string, parameter: string, region: string) {
-    return `/api/${model}/${parameter}/${run}/${step}/${region}.png`;
+    return `/api/${model}/${parameter}/${run}/${leftPad(step, 3)}/${region}.png`;
 }
 
 type SelectionItem = {

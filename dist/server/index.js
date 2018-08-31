@@ -74,14 +74,25 @@ var styles = {
     PRES_surface: 'pressure'
 };
 app.get('/api/:model/:parameter/:run/:step/:region.png', function (req, res) { return __awaiter(_this, void 0, void 0, function () {
-    var _a, model, parameter, run, step, region, bbox, style, err_1;
+    var _a, model, parameter, run, step, region, bbox, style, fileExists, imgPath, err_1;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
                 _a = req.params, model = _a.model, parameter = _a.parameter, run = _a.run, step = _a.step, region = _a.region;
                 bbox = bboxes[region];
                 style = styles[parameter];
-                _b.label = 1;
+                fileExists = false;
+                try {
+                    imgPath = config_1.default.imgDir + "/" + model + "/" + run + "/" + step + "/" + parameter + "/" + region + ".png";
+                    require('fs').statSync(imgPath);
+                    fileExists = true;
+                }
+                catch (e) {
+                    fileExists = false;
+                }
+                if (!fileExists) return [3 /*break*/, 1];
+                res.redirect(config_1.default.urlPath + "/images/" + model + "/" + run + "/" + step + "/" + parameter + "/" + region + ".png");
+                return [3 /*break*/, 5];
             case 1:
                 _b.trys.push([1, 4, , 5]);
                 return [4 /*yield*/, exec("mkdir -p " + config_1.default.imgDir + "/" + model + "/" + run + "/" + step + "/" + parameter)];
