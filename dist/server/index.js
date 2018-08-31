@@ -66,6 +66,7 @@ function claimWorker() {
             return [2 /*return*/, new Promise(function (resolve, reject) {
                     if (currentWorkers < maxWorkers) {
                         currentWorkers++;
+                        console.info("Claiming worker [" + currentWorkers + "]");
                         resolve();
                     }
                     else {
@@ -80,6 +81,7 @@ function claimWorker() {
 function releaseWorker() {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
+            console.info("Releasing Worker");
             currentWorkers--;
             return [2 /*return*/, Promise.resolve()];
         });

@@ -26,6 +26,7 @@ async function claimWorker() {
     return new Promise((resolve, reject) => {
         if (currentWorkers < maxWorkers) {
             currentWorkers++;
+            console.info(`Claiming worker [${currentWorkers}]`);
             resolve();
         } else {
             setTimeout(() => {
@@ -36,6 +37,7 @@ async function claimWorker() {
 }
 
 async function releaseWorker() {
+    console.info(`Releasing Worker`);
     currentWorkers--;
     return Promise.resolve();
 }
