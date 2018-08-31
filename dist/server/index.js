@@ -161,15 +161,8 @@ app.get('/api/:model/:parameter/:run/:step/:region.png', function (req, res) { r
                 _b.trys.push([1, 3, , 4]);
                 return [4 /*yield*/, enqueue(function () { return __awaiter(_this, void 0, void 0, function () {
                         return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0: return [4 /*yield*/, exec("mkdir -p " + config_1.default.imgDir + "/" + model + "/" + run + "/" + step + "/" + parameter)];
-                                case 1:
-                                    _a.sent();
-                                    return [4 /*yield*/, exec("python map-generators/" + style + ".py " + config_1.default.gribDir + "/" + model + "/" + run + "/" + step + "/" + parameter + ".grib2 " + bbox.join(' ') + " " + config_1.default.imgDir + "/" + model + "/" + run + "/" + step + "/" + parameter + "/" + region + ".png")];
-                                case 2:
-                                    _a.sent();
-                                    return [2 /*return*/];
-                            }
+                            return [2 /*return*/, exec("mkdir -p " + config_1.default.imgDir + "/" + model + "/" + run + "/" + step + "/" + parameter)
+                                    .then(function () { return exec("python map-generators/" + style + ".py " + config_1.default.gribDir + "/" + model + "/" + run + "/" + step + "/" + parameter + ".grib2 " + bbox.join(' ') + " " + config_1.default.imgDir + "/" + model + "/" + run + "/" + step + "/" + parameter + "/" + region + ".png"); })];
                         });
                     }); })];
             case 2:

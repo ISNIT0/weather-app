@@ -95,8 +95,8 @@ app.get('/api/:model/:parameter/:run/:step/:region.png', async (req, res) => {
     } else {
         try {
             await enqueue(async () => {
-                await exec(`mkdir -p ${config.imgDir}/${model}/${run}/${step}/${parameter}`);
-                await exec(`python map-generators/${style}.py ${config.gribDir}/${model}/${run}/${step}/${parameter}.grib2 ${bbox.join(' ')} ${config.imgDir}/${model}/${run}/${step}/${parameter}/${region}.png`);
+                return exec(`mkdir -p ${config.imgDir}/${model}/${run}/${step}/${parameter}`)
+                    .then(() => exec(`python map-generators/${style}.py ${config.gribDir}/${model}/${run}/${step}/${parameter}.grib2 ${bbox.join(' ')} ${config.imgDir}/${model}/${run}/${step}/${parameter}/${region}.png`));
             });
             res.redirect(`${config.urlPath}/images/${model}/${run}/${step}/${parameter}/${region}.png`);
         } catch (err) {
