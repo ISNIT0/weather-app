@@ -1,3 +1,4 @@
 node_modules
 images
 *.grib2
+out.png

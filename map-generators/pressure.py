@@ -81,7 +81,7 @@ ax = fig.add_axes([0.05,0.05,0.9,0.85])
 cs = m.contour(x,y,prmsl,clevs,colors='k',linewidths=1.)
 m.drawcoastlines(linewidth=1.25)
 m.drawlsmask(land_color=(0.25,0.5,0,1), ocean_color=(0.9,0.9,1,1))
-# m.fillcontinents(color=(0.25,0.5,0,1))
+m.fillcontinents(color=(0.25,0.5,0,1))
 # m.drawparallels(np.arange(-80,81,20),labels=[1,1,0,0])
 # m.drawmeridians(np.arange(0,360,60),labels=[0,0,0,1])
 xlows = x[local_min]; xhighs = x[local_max]
