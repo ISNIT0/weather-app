@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var config = {
     production: {
-        downloadPath: '/srv/gribs',
+        downloadPath: '/srv/gribs/gfs',
         imagePath: '/srv/images/',
         wgrib2: '/home/user/grib2/wgrib2/wgrib2',
         mysql: {
