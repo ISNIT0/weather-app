@@ -41,10 +41,6 @@ plt.figure(figsize=(2400.0/float(DPI),1220.0/float(DPI)))
 #grib = '../download/gfs/2018083100/168/TMP_2maboveground.grib2'
 grbs = pygrib.open(sys.argv[1])
 
-grbs.seek(0)
-for grb in grbs:
-    print(grb)
-
 grb = grbs.select(name='Surface pressure')[0]
 data = grb.values
 

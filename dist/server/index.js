@@ -70,6 +70,8 @@ var bboxes = {
     ger: [-10.9333000000, 53.6500000000, 2.5000000000, 59.2333000000]
 };
 var styles = {
+    TMIN_2maboveground: 'temp',
+    TMAX_2maboveground: 'temp',
     TMP_2maboveground: 'temp',
     PRES_surface: 'pressure'
 };

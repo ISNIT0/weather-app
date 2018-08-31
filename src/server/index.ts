@@ -37,6 +37,8 @@ let bboxes: any = {
 };
 
 let styles: any = {
+    TMIN_2maboveground: 'temp',
+    TMAX_2maboveground: 'temp',
     TMP_2maboveground: 'temp',
     PRES_surface: 'pressure'
 };
