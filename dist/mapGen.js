@@ -63,7 +63,8 @@ function makeTemperatureMap(gribFilePath, bbox) {
                     }
                     else {
                         var val = values[x][y].value;
-                        var neighbourDiffers = !(((values[x - 1] || [])[y] || {}).value === val &&
+                        var neighbourDiffers = !( //TODO: replace
+                        ((values[x - 1] || [])[y] || {}).value === val &&
                             ((values[x + 1] || [])[y] || {}).value === val &&
                             ((values[x] || [])[y - 1] || {}).value === val &&
                             ((values[x] || [])[y + 1] || {}).value === val);

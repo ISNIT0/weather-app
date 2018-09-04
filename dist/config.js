@@ -16,6 +16,8 @@ var config = {
         imagePath: './images/',
         wgrib2: 'wgrib2',
         mysql: {
+            user: 'dev',
+            password: 'password',
             database: 'weather'
         }
     }

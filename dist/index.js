@@ -14,8 +14,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
         while (_) try {
-            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [0, t.value];
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
                 case 0: case 1: t = op; break;
                 case 4: _.label++; return { value: op[1], done: false };
@@ -38,16 +38,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var mysql2 = require("mysql2");
 var path = require("path");
 var exec = require("promised-exec");
-var NRP = require("node-redis-pubsub");
 var request = require("request-promise-native");
 var cheerio = require("cheerio");
 var moment = require("moment");
 var Redis = require("redis");
+var kue = require("kue");
+var queue = kue.createQueue();
+queue.on('error', function (err) {
+    console.error(err);
+});
 var redis = Redis.createClient();
 var config_1 = require("./config");
-var nrp = new NRP({
-    scope: ''
-});
 var mysql = mysql2.createConnection(config_1.default.mysql);
 function querySQL(query) {
     var args = [];
@@ -182,7 +183,7 @@ function pollForSteps() {
                     if (!(stepCursorIndex !== (steps.length - 1))) return [3 /*break*/, 3];
                     newStep = steps[stepCursorIndex + 1];
                     redisSet('pollCursor', JSON.stringify({ runCursor: runCursor, stepCursor: newStep }));
-                    nrp.emit("stepAvailable", { run: runCursor, step: leftPad(stepCursor, 3), model: 'gfs' });
+                    queue.create('stepAvailable', { run: runCursor, step: leftPad(stepCursor, 3), model: 'gfs' }).save(function (err) { return err && console.error(err); });
                     setTimeout(function () { return pollForSteps(); }, 1000);
                     return [3 /*break*/, 5];
                 case 3: return [4 /*yield*/, getRuns()];
@@ -194,7 +195,7 @@ function pollForSteps() {
                     if (runCursorIndex !== (runs.length - 1)) {
                         newRun = runs[runCursorIndex + 1];
                         redisSet('pollCursor', JSON.stringify({ runCursor: newRun, stepCursor: 0 }));
-                        nrp.emit("stepAvailable", { run: newRun, step: leftPad(0, 3), model: 'gfs' });
+                        queue.create('stepAvailable', { run: newRun, step: leftPad(0, 3), model: 'gfs' }).save(function (err) { return err && console.error(err); });
                         setTimeout(function () { return pollForSteps(); }, 1000);
                     }
                     else {
@@ -207,23 +208,23 @@ function pollForSteps() {
     });
 }
 pollForSteps();
-nrp.on("stepAvailable", function (_a) {
-    var run = _a.run, step = _a.step, model = _a.model;
+queue.process("stepAvailable", function (_a, done) {
+    var _b = _a.data, run = _b.run, step = _b.step, model = _b.model;
     return __awaiter(this, void 0, void 0, function () {
         var maps, phGroups, _i, phGroups_1, ph, outDir, outFile, err_1;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        return __generator(this, function (_c) {
+            switch (_c.label) {
                 case 0:
                     console.info("Got [stepAvailable] message: [run=" + run + "] [step=" + step + "]");
-                    _b.label = 1;
+                    _c.label = 1;
                 case 1:
-                    _b.trys.push([1, 8, , 9]);
+                    _c.trys.push([1, 8, , 9]);
                     return [4 /*yield*/, querySQL('SELECT * from `map_configs` WHERE `model` = ?', model)];
                 case 2:
-                    maps = _b.sent();
+                    maps = _c.sent();
                     phGroups = maps.map(function (m) { return m.parameter; });
                     _i = 0, phGroups_1 = phGroups;
-                    _b.label = 3;
+                    _c.label = 3;
                 case 3:
                     if (!(_i < phGroups_1.length)) return [3 /*break*/, 7];
                     ph = phGroups_1[_i];
@@ -231,19 +232,22 @@ nrp.on("stepAvailable", function (_a) {
                     outFile = path.join(outDir, ph.replace(/:/g, '_') + ".grib2");
                     return [4 /*yield*/, exec("mkdir -p " + outDir)];
                 case 4:
-                    _b.sent();
+                    _c.sent();
                     return [4 /*yield*/, exec("gfsscraper downloadStep --outFile \"" + outFile + "\" --run \"" + run + "\" --step \"" + step + "\" --parameterHeightGroups " + ph)];
                 case 5:
-                    _b.sent();
-                    nrp.emit("stepDownloaded", { run: run, step: step, model: model, parameter: ph });
-                    _b.label = 6;
+                    _c.sent();
+                    queue.create('stepDownloaded', { run: run, step: step, model: model, parameter: ph }).save(function (err) { return err && console.error(err); });
+                    _c.label = 6;
                 case 6:
                     _i++;
                     return [3 /*break*/, 3];
-                case 7: return [3 /*break*/, 9];
+                case 7:
+                    done();
+                    return [3 /*break*/, 9];
                 case 8:
-                    err_1 = _b.sent();
+                    err_1 = _c.sent();
                     console.error("Failed to exec gfsscraper downloadStep:", err_1);
+                    done(err_1);
                     return [3 /*break*/, 9];
                 case 9: return [2 /*return*/];
             }
@@ -261,11 +265,11 @@ nrp.on("stepAvailable", function (_a) {
 //         console.error(`Failed to exec gfsscraper convertStep:`, err);
 //     }
 // });
-nrp.on("stepDownloaded", function (_a) {
-    var run = _a.run, step = _a.step, model = _a.model, parameter = _a.parameter;
+queue.process("stepDownloaded", function (_a, done) {
+    var _b = _a.data, run = _b.run, step = _b.step, model = _b.model, parameter = _b.parameter;
     return __awaiter(this, void 0, void 0, function () {
         var inFile, warpedFile;
-        return __generator(this, function (_b) {
+        return __generator(this, function (_c) {
             console.info("Got [stepDownloaded] message: [run=" + run + "] [step=" + step + "]");
             parameter = parameter.replace(/:/g, '_');
             inFile = path.join(config_1.default.downloadPath, run, step, parameter + ".grib2");
@@ -277,30 +281,39 @@ nrp.on("stepDownloaded", function (_a) {
                 // await exec(`gdal_translate -of Gtiff -b 1 ${warpedFile} ${outFile}`);
                 //Cleanup
                 //await exec(`rm ${inFile} && rm ${warpedFile}`);
-                nrp.emit("stepProcessed", { run: run, step: step, model: model, parameter: parameter });
+                queue.create('stepProcessed', { run: run, step: step, model: model, parameter: parameter }).save(function (err) { return err && console.error(err); });
+                done();
             }
             catch (err) {
                 console.error("Failed to exec gfsscraper downloadStep:", err);
+                done(err);
             }
             return [2 /*return*/];
         });
     });
 });
-nrp.on("stepProcessed", function (_a) {
-    var run = _a.run, step = _a.step, model = _a.model, parameter = _a.parameter;
+queue.process("stepProcessed", function (_a, done) {
+    var _b = _a.data, run = _b.run, step = _b.step, model = _b.model, parameter = _b.parameter;
     return __awaiter(this, void 0, void 0, function () {
         var stepTime;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        return __generator(this, function (_c) {
+            switch (_c.label) {
                 case 0:
                     // Store map hash in mongo
                     console.info("Got [stepProcessed] message: [run=" + run + "] [step=" + step + "] [parameter=" + parameter + "] [model=" + model + "]");
                     stepTime = moment(run, 'YYYYMMDDHH').add(+step, 'hour').toDate();
                     return [4 /*yield*/, querySQL('INSERT IGNORE `steps_avail` (run, step, model, parameter, step_time) VALUES (?, ?, ?, ?, ?)', run, step, model, parameter, stepTime)];
                 case 1:
-                    _b.sent();
+                    _c.sent();
+                    done();
                     return [2 /*return*/];
             }
         });
+    });
+});
+process.once('SIGTERM', function (sig) {
+    queue.shutdown(5000, function (err) {
+        console.log('Kue shutdown: ', err || '');
+        process.exit(0);
     });
 });

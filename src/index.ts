@@ -1,19 +1,22 @@
 import * as mysql2 from 'mysql2';
 import * as path from 'path';
 import exec = require('promised-exec');
-import NRP = require('node-redis-pubsub');
 import * as request from 'request-promise-native';
 import * as cheerio from 'cheerio';
 import * as moment from 'moment';
 import * as Redis from 'redis';
+import * as kue from 'kue';
+
+
+const queue = kue.createQueue();
+
+queue.on('error', function (err) {
+    console.error(err);
+});
 
 const redis = Redis.createClient();
 
 import config from './config';
-
-const nrp = new NRP({
-    scope: ''
-});
 
 const mysql = mysql2.createConnection(config.mysql);
 
@@ -141,7 +144,7 @@ async function pollForSteps() {
     if (stepCursorIndex !== (steps.length - 1)) {
         const newStep = steps[stepCursorIndex + 1];
         redisSet('pollCursor', JSON.stringify({ runCursor, stepCursor: newStep }));
-        nrp.emit(`stepAvailable`, { run: runCursor, step: leftPad(stepCursor, 3), model: 'gfs' });
+        queue.create('stepAvailable', { run: runCursor, step: leftPad(stepCursor, 3), model: 'gfs' }).save(err => err && console.error(err));
         setTimeout(() => pollForSteps(), 1000);
     } else {
         const runs = await getRuns();
@@ -150,8 +153,11 @@ async function pollForSteps() {
         console.log(`RunCursorIndex is [${runCursorIndex}]`);
         if (runCursorIndex !== (runs.length - 1)) {
             const newRun = runs[runCursorIndex + 1];
+
             redisSet('pollCursor', JSON.stringify({ runCursor: newRun, stepCursor: 0 }));
-            nrp.emit(`stepAvailable`, { run: newRun, step: leftPad(0, 3), model: 'gfs' });
+
+            queue.create('stepAvailable', { run: newRun, step: leftPad(0, 3), model: 'gfs' }).save(err => err && console.error(err));
+
             setTimeout(() => pollForSteps(), 1000);
         } else {
             setTimeout(pollForSteps, 1000 * 60 * 3);
@@ -161,7 +167,7 @@ async function pollForSteps() {
 
 pollForSteps();
 
-nrp.on(`stepAvailable`, async function ({ run, step, model }: any) { // Download Step
+queue.process(`stepAvailable`, async function ({ data: { run, step, model } }: any, done) { // Download Step
     console.info(`Got [stepAvailable] message: [run=${run}] [step=${step}]`);
 
     try {
@@ -174,10 +180,12 @@ nrp.on(`stepAvailable`, async function ({ run, step, model }: any) { // Download
             const outFile = path.join(outDir, `${ph.replace(/:/g, '_')}.grib2`);
             await exec(`mkdir -p ${outDir}`);
             await exec(`gfsscraper downloadStep --outFile "${outFile}" --run "${run}" --step "${step}" --parameterHeightGroups ${ph}`);
-            nrp.emit(`stepDownloaded`, { run, step, model, parameter: ph });
+            queue.create('stepDownloaded', { run, step, model, parameter: ph }).save(err => err && console.error(err));
         }
+        done();
     } catch (err) {
         console.error(`Failed to exec gfsscraper downloadStep:`, err);
+        done(err);
     }
 });
 
@@ -193,7 +201,7 @@ nrp.on(`stepAvailable`, async function ({ run, step, model }: any) { // Download
 //     }
 // });
 
-nrp.on(`stepDownloaded`, async function ({ run, step, model, parameter }: any) { // Make Map
+queue.process(`stepDownloaded`, async function ({ data: { run, step, model, parameter } }: any, done) { // Make Map
     console.info(`Got [stepDownloaded] message: [run=${run}] [step=${step}]`);
     parameter = parameter.replace(/:/g, '_');
     const inFile = path.join(config.downloadPath, run, step, `${parameter}.grib2`);
@@ -207,15 +215,25 @@ nrp.on(`stepDownloaded`, async function ({ run, step, model, parameter }: any) {
         //Cleanup
         //await exec(`rm ${inFile} && rm ${warpedFile}`);
 
-        nrp.emit(`stepProcessed`, { run, step, model, parameter });
+        queue.create('stepProcessed', { run, step, model, parameter }).save(err => err && console.error(err));
+        done();
     } catch (err) {
         console.error(`Failed to exec gfsscraper downloadStep:`, err);
+        done(err);
     }
 });
 
-nrp.on(`stepProcessed`, async function ({ run, step, model, parameter }: any) {
+queue.process(`stepProcessed`, async function ({ data: { run, step, model, parameter } }: any, done) {
     // Store map hash in mongo
     console.info(`Got [stepProcessed] message: [run=${run}] [step=${step}] [parameter=${parameter}] [model=${model}]`);
     const stepTime = moment(run, 'YYYYMMDDHH').add(+step, 'hour').toDate();
     await querySQL('INSERT IGNORE `steps_avail` (run, step, model, parameter, step_time) VALUES (?, ?, ?, ?, ?)', run, step, model, parameter, stepTime);
+    done();
+});
+
+process.once('SIGTERM', function (sig) {
+    queue.shutdown(5000, function (err) {
+        console.log('Kue shutdown: ', err || '');
+        process.exit(0);
+    });
 });
