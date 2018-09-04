@@ -265,30 +265,45 @@ queue.process("stepAvailable", function (_a, done) {
 //         console.error(`Failed to exec gfsscraper convertStep:`, err);
 //     }
 // });
-queue.process("stepDownloaded", function (_a, done) {
+queue.process("stepDownloaded", 2, function (_a, done) {
     var _b = _a.data, run = _b.run, step = _b.step, model = _b.model, parameter = _b.parameter;
     return __awaiter(this, void 0, void 0, function () {
-        var inFile, warpedFile;
+        var inFile, warpedFile, err_2;
         return __generator(this, function (_c) {
-            console.info("Got [stepDownloaded] message: [run=" + run + "] [step=" + step + "]");
-            parameter = parameter.replace(/:/g, '_');
-            inFile = path.join(config_1.default.downloadPath, run, step, parameter + ".grib2");
-            warpedFile = path.join(config_1.default.downloadPath, run, step, parameter + ".warped.grib2");
-            try {
-                //GDAL Warp
-                // await exec(`gdalwarp -t_srs EPSG:3857 ${inFile} ${warpedFile}`);
-                //GDAL Translate
-                // await exec(`gdal_translate -of Gtiff -b 1 ${warpedFile} ${outFile}`);
-                //Cleanup
-                //await exec(`rm ${inFile} && rm ${warpedFile}`);
-                queue.create('stepProcessed', { run: run, step: step, model: model, parameter: parameter }).save(function (err) { return err && console.error(err); });
-                done();
+            switch (_c.label) {
+                case 0:
+                    console.info("Got [stepDownloaded] message: [run=" + run + "] [step=" + step + "]");
+                    parameter = parameter.replace(/:/g, '_');
+                    inFile = path.join(config_1.default.downloadPath, run, step, parameter + ".grib2");
+                    warpedFile = path.join(config_1.default.downloadPath, run, step, parameter + ".warped.grib2");
+                    _c.label = 1;
+                case 1:
+                    _c.trys.push([1, 3, , 4]);
+                    //GDAL Warp
+                    // await exec(`gdalwarp -t_srs EPSG:3857 ${inFile} ${warpedFile}`);
+                    //GDAL Translate
+                    // await exec(`gdal_translate -of Gtiff -b 1 ${warpedFile} ${outFile}`);
+                    //Cleanup
+                    //await exec(`rm ${inFile} && rm ${warpedFile}`);
+                    return [4 /*yield*/, exec("curl https://fastweather.app/api/gfs/" + parameter + "/" + run + "/" + leftPad(step, 3) + "/gbr.png")];
+                case 2:
+                    //GDAL Warp
+                    // await exec(`gdalwarp -t_srs EPSG:3857 ${inFile} ${warpedFile}`);
+                    //GDAL Translate
+                    // await exec(`gdal_translate -of Gtiff -b 1 ${warpedFile} ${outFile}`);
+                    //Cleanup
+                    //await exec(`rm ${inFile} && rm ${warpedFile}`);
+                    _c.sent();
+                    queue.create('stepProcessed', { run: run, step: step, model: model, parameter: parameter }).save(function (err) { return err && console.error(err); });
+                    done();
+                    return [3 /*break*/, 4];
+                case 3:
+                    err_2 = _c.sent();
+                    console.error("Failed to exec gfsscraper downloadStep:", err_2);
+                    done(err_2);
+                    return [3 /*break*/, 4];
+                case 4: return [2 /*return*/];
             }
-            catch (err) {
-                console.error("Failed to exec gfsscraper downloadStep:", err);
-                done(err);
-            }
-            return [2 /*return*/];
         });
     });
 });

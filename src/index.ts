@@ -201,7 +201,7 @@ queue.process(`stepAvailable`, async function ({ data: { run, step, model } }: a
 //     }
 // });
 
-queue.process(`stepDownloaded`, async function ({ data: { run, step, model, parameter } }: any, done) { // Make Map
+queue.process(`stepDownloaded`, 2, async function ({ data: { run, step, model, parameter } }: any, done) { // Make Map
     console.info(`Got [stepDownloaded] message: [run=${run}] [step=${step}]`);
     parameter = parameter.replace(/:/g, '_');
     const inFile = path.join(config.downloadPath, run, step, `${parameter}.grib2`);
@@ -214,6 +214,8 @@ queue.process(`stepDownloaded`, async function ({ data: { run, step, model, para
         // await exec(`gdal_translate -of Gtiff -b 1 ${warpedFile} ${outFile}`);
         //Cleanup
         //await exec(`rm ${inFile} && rm ${warpedFile}`);
+
+        await exec(`curl https://fastweather.app/api/gfs/${parameter}/${run}/${leftPad(step, 3)}/gbr.png`);
 
         queue.create('stepProcessed', { run, step, model, parameter }).save(err => err && console.error(err));
         done();
