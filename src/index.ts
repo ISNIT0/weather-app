@@ -6,6 +6,7 @@ import * as cheerio from 'cheerio';
 import * as moment from 'moment';
 import * as Redis from 'redis';
 import * as kue from 'kue';
+import { stat, statSync } from 'fs';
 
 
 const queue = kue.createQueue();
@@ -180,7 +181,11 @@ queue.process(`stepAvailable`, async function ({ data: { run, step, model } }: a
             const outFile = path.join(outDir, `${ph.replace(/:/g, '_')}.grib2`);
             await exec(`mkdir -p ${outDir}`);
             await exec(`gfsscraper downloadStep --outFile "${outFile}" --run "${run}" --step "${step}" --parameterHeightGroups ${ph}`);
-            queue.create('stepDownloaded', { run, step, model, parameter: ph }).save(err => err && console.error(err));
+
+            try {
+                statSync(outFile)
+                queue.create('stepDownloaded', { run, step, model, parameter: ph }).save(err => err && console.error(err));
+            } catch (err) { }
         }
         done();
     } catch (err) {
