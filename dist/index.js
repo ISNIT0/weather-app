@@ -43,6 +43,7 @@ var cheerio = require("cheerio");
 var moment = require("moment");
 var Redis = require("redis");
 var kue = require("kue");
+var fs_1 = require("fs");
 var queue = kue.createQueue();
 queue.on('error', function (err) {
     console.error(err);
@@ -236,7 +237,11 @@ queue.process("stepAvailable", function (_a, done) {
                     return [4 /*yield*/, exec("gfsscraper downloadStep --outFile \"" + outFile + "\" --run \"" + run + "\" --step \"" + step + "\" --parameterHeightGroups " + ph)];
                 case 5:
                     _c.sent();
-                    queue.create('stepDownloaded', { run: run, step: step, model: model, parameter: ph }).save(function (err) { return err && console.error(err); });
+                    try {
+                        fs_1.statSync(outFile);
+                        queue.create('stepDownloaded', { run: run, step: step, model: model, parameter: ph }).save(function (err) { return err && console.error(err); });
+                    }
+                    catch (err) { }
                     _c.label = 6;
                 case 6:
                     _i++;
@@ -285,7 +290,10 @@ queue.process("stepDownloaded", 2, function (_a, done) {
                     // await exec(`gdal_translate -of Gtiff -b 1 ${warpedFile} ${outFile}`);
                     //Cleanup
                     //await exec(`rm ${inFile} && rm ${warpedFile}`);
-                    return [4 /*yield*/, exec("curl https://fastweather.app/api/gfs/" + parameter + "/" + run + "/" + leftPad(step, 3) + "/gbr.png")];
+                    return [4 /*yield*/, Promise.all([
+                            exec("curl https://fastweather.app/api/gfs/" + parameter + "/" + run + "/" + leftPad(step, 3) + "/gbr.png"),
+                            exec("curl https://fastweather.app/api/gfs/" + parameter + "/" + run + "/" + leftPad(step, 3) + "/ger.png")
+                        ])];
                 case 2:
                     //GDAL Warp
                     // await exec(`gdalwarp -t_srs EPSG:3857 ${inFile} ${warpedFile}`);

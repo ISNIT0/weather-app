@@ -183,7 +183,7 @@ queue.process(`stepAvailable`, async function ({ data: { run, step, model } }: a
             await exec(`gfsscraper downloadStep --outFile "${outFile}" --run "${run}" --step "${step}" --parameterHeightGroups ${ph}`);
 
             try {
-                statSync(outFile)
+                statSync(outFile);
                 queue.create('stepDownloaded', { run, step, model, parameter: ph }).save(err => err && console.error(err));
             } catch (err) { }
         }
@@ -220,7 +220,10 @@ queue.process(`stepDownloaded`, 2, async function ({ data: { run, step, model, p
         //Cleanup
         //await exec(`rm ${inFile} && rm ${warpedFile}`);
 
-        await exec(`curl https://fastweather.app/api/gfs/${parameter}/${run}/${leftPad(step, 3)}/gbr.png`);
+        await Promise.all([
+            exec(`curl https://fastweather.app/api/gfs/${parameter}/${run}/${leftPad(step, 3)}/gbr.png`),
+            exec(`curl https://fastweather.app/api/gfs/${parameter}/${run}/${leftPad(step, 3)}/ger.png`)
+        ]);
 
         queue.create('stepProcessed', { run, step, model, parameter }).save(err => err && console.error(err));
         done();
