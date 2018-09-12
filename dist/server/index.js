@@ -169,7 +169,7 @@ app.get('/api/mapRuns/:model/:parameter', function (req, res) {
                         acc[step.run].push(step);
                         acc[step.run] = acc[step.run].sort(function (a, b) {
                             return parseInt(a.step) > parseInt(b.step) ? 1 : -1;
-                        });
+                        }).filter(function (item, index, arr) { return item != arr[index - 1]; });
                         return acc;
                     }, {});
                     res.send(stepsByRun);

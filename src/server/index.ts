@@ -117,7 +117,7 @@ app.get('/api/mapRuns/:model/:parameter', async function (req, res) {
         acc[step.run].push(step);
         acc[step.run] = acc[step.run].sort((a: any, b: any) => {
             return parseInt(a.step) > parseInt(b.step) ? 1 : -1;
-        });
+        }).filter((item: any, index: number, arr: any[]) => item != arr[index - 1]);
         return acc;
     }, {});
     res.send(stepsByRun);
