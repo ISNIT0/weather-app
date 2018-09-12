@@ -185,4 +185,4 @@ var affect = nimble_1.makeRenderLoop(target, {
 //         const { regions, parameters } = data;
 //         affect.set('regions', regions);
 //         affect.set('parameters', parameters);
-//     }); 
+//     });

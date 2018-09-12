@@ -14,8 +14,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
         while (_) try {
-            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [0, t.value];
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
                 case 0: case 1: t = op; break;
                 case 4: _.label++; return { value: op[1], done: false };
@@ -97,7 +97,7 @@ app.use(express.static('dist/client'));
 app.use(express.static('images'));
 var bboxes = {
     gbr: [-13.291912, 2.763414, 49.731026, 61.046795],
-    ger: [-10.9333000000, 53.6500000000, 2.5000000000, 59.2333000000]
+    ger: [4.110260, 16.699219, 46.860191, 55.140817]
 };
 var styles = {
     TMIN_2maboveground: 'temp',
