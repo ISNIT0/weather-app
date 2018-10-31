@@ -84,7 +84,7 @@ const affect = makeRenderLoop(target, {
                     const latestRun = Object.keys(data)
                         .map(a => parseInt(a))
                         .sort((a, b) => a < b ? 1 : -1)[0];
-                    if (!state.selectedStep) {
+                    if (!state.selectedStep.step) {
                         affect.set('selectedStep', data[latestRun][0]);
                     }
                     if (!state.selectedRun) {
@@ -118,14 +118,16 @@ const affect = makeRenderLoop(target, {
                 region: 'gbr',
                 parameter: 'APCP_surface'
             }
-        }, {
-            name: 'GFS UK Low Cloud',
-            value: {
-                model: 'gfs',
-                region: 'gbr',
-                parameter: 'TCDC_lowcloudlayer'
-            }
-        }];
+        },
+            // {
+            //     name: 'GFS UK Low Cloud',
+            //     value: {
+            //         model: 'gfs',
+            //         region: 'gbr',
+            //         parameter: 'TCDC_lowcloudlayer'
+            //     }
+            // }
+        ];
 
         const models = [
             {
@@ -160,7 +162,7 @@ const affect = makeRenderLoop(target, {
             { name: 'Temperature Min', value: 'TMIN_2maboveground' },
             { name: 'Temperature Max', value: 'TMAX_2maboveground' },
             // { name: 'Wind 2M', value: 'wind2m' },
-            { name: 'Low Cloud', value: 'TCDC_lowcloudlayer' },
+            // { name: 'Low Cloud', value: 'TCDC_lowcloudlayer' },
             { name: 'Precipitation', value: 'APCP_surface' }
         ];
 

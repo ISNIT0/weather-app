@@ -55,7 +55,7 @@ var affect = nimble_1.makeRenderLoop(target, {
             var latestRun = Object.keys(data)
                 .map(function (a) { return parseInt(a); })
                 .sort(function (a, b) { return a < b ? 1 : -1; })[0];
-            if (!state.selectedStep) {
+            if (!state.selectedStep.step) {
                 affect.set('selectedStep', data[latestRun][0]);
             }
             if (!state.selectedRun) {
@@ -87,14 +87,8 @@ var affect = nimble_1.makeRenderLoop(target, {
                 region: 'gbr',
                 parameter: 'APCP_surface'
             }
-        }, {
-            name: 'GFS UK Low Cloud',
-            value: {
-                model: 'gfs',
-                region: 'gbr',
-                parameter: 'TCDC_lowcloudlayer'
-            }
-        }];
+        },
+    ];
     var models = [
         {
             name: 'GFS Op',
@@ -114,7 +108,7 @@ var affect = nimble_1.makeRenderLoop(target, {
         { name: 'Temperature Min', value: 'TMIN_2maboveground' },
         { name: 'Temperature Max', value: 'TMAX_2maboveground' },
         // { name: 'Wind 2M', value: 'wind2m' },
-        { name: 'Low Cloud', value: 'TCDC_lowcloudlayer' },
+        // { name: 'Low Cloud', value: 'TCDC_lowcloudlayer' },
         { name: 'Precipitation', value: 'APCP_surface' }
     ];
     return nimble_1.h('div.app', [
