@@ -1,2 +1,5 @@
 node_modules
 download
+images
+*.grib2
+out.png
